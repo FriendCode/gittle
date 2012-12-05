@@ -59,7 +59,10 @@ class Gittle(object):
 
     def _commit(self, commiter=None, author=None, message=None, *args, **kwargs):
         message = message or self.DEFAULT_MESSAGE
-        return self.repo.do_commit(message=message)
+        return self.repo.do_commit(
+            message=message,
+            author=author,
+            commmiter=commiter)
 
     # Like: git commmit -a
     def commit(self, name=None, email=None, message=None):
@@ -94,3 +97,12 @@ class Gittle(object):
     @utils.arglist_method
     def checkout(self, files):
         pass
+
+    @utils.arglist_method
+    def reset(self, files):
+        pass
+
+    def reset_all(self):
+        index = self.repo.open_index()
+        index.clear()
+        return index.write()
