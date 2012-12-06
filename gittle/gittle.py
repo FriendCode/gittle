@@ -189,13 +189,15 @@ class Gittle(object):
         return index.write()
 
     # Move file in the git index
-    def mv_index(self, old_name, new_name):
+    def mv_index(self, file_pair):
+        old_name, new_name = file_pair
         index = self.index
-        entry = index[current_name]
+        entry = index[old_name]
         index[new_name] = entry
-        del index[current_name]
+        del index[old_name]
 
-    def mv_fs(self, old_name, new_name):
+    def mv_fs(self, file_pair):
+        old_name, new_name = file_pair
         os.rename(old_name, new_name)
 
     # Like: git mv
