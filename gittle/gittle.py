@@ -43,6 +43,8 @@ class Gittle(object):
 
     def _get_ignore_regexes(self):
         gitignore_filename = os.path.join(self.path, '.gitignore')
+        if not os.path.exists(gitignore_filename):
+            return []
         lines = open(gitignore_filename).readlines()
         globers = map(lambda line: line.rstrip(), lines)
         return utils.globers_to_regex(globers)
