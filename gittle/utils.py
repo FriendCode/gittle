@@ -9,6 +9,14 @@ from functools import wraps
 LIST_TYPES = (list, tuple, set)
 
 
+def first(iterable):
+    return iterable[0]
+
+
+def last(iterable):
+    return iterable[-1]
+
+
 def list_from_args(args):
     """
     Flatten list of args
