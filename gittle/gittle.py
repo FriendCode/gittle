@@ -67,8 +67,12 @@ class Gittle(object):
         return cls(repo)
 
     @classmethod
-    def clone_remote(cls, remote_path, local_path, **kwargs):
+    def clone_remote(cls, remote_path, local_path, mkdir=True, **kwargs):
         """Clone a remote repository"""
+
+        if mkdir and not(os.path.exists(local_path)):
+            os.makedirs(local_path)
+
         # Initialize the local repository
         local_repo = DRepo.init(local_path)
 
@@ -85,6 +89,7 @@ class Gittle(object):
         # Add origin
         return cls(local_repo)
 
+    @classmethod
     def clone(cls):
         """Clone a local repository"""
         pass
