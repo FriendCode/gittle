@@ -5,6 +5,7 @@ import copy
 # Dulwich imports
 from dulwich.repo import Repo as DRepo
 from dulwich.client import get_transport_and_path
+from dulwich.index import build_index_from_tree
 
 # Local imports
 from . import utils
@@ -82,11 +83,14 @@ class Gittle(object):
         client, host_path = get_transport_and_path(remote_path, **kwargs)
 
         # Fetch data from remote repository
-        remote_refs = client.fetch(host_path, local_repo,
-            determine_wants=local_repo.object_store.determine_wants_all)
+        remote_refs = client.fetch(host_path, local_repo)
 
         # Update head
         local_repo["HEAD"] = remote_refs["HEAD"]
+
+        # Rebuild index
+        build_index_from_tree(local_repo.path, local_repo.index_path(),
+                        local_repo.object_store, local_repo['HEAD'].tree)
 
         # Add origin
         return cls(local_repo)
