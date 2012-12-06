@@ -12,7 +12,6 @@ repo_path = '/Users/aaron/git/SEO'
 repo_url = 'git@github.com:SamyPesse/ENode.git'
 
 kwargs = {
-    'username': 'git',
     'pkey': key,
 }
 

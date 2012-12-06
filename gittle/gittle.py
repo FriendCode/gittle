@@ -182,23 +182,29 @@ class Gittle(object):
     # Like: git rm
     @utils.arglist_method
     def rm(self, files, force=False):
-        for f in files:
-            if not f in self.index:
-                continue
+        index = self.index
+        index_files = filter(lambda f: f in index, files)
+        for f in index_files:
             del self.index[f]
-        return self.index.write()
+        return index.write()
 
     # Like: git mv
     @utils.arglist_method
-    def mv(self, files):
-        pass
+    def mv(self, files_pair):
+        index = self.index
+        files_in_index = filter(lambda f: f[0] in index, files_pair)
+        for current_name, new_name in files_in_index:
+            entry = index[current_name]
+            index[new_name] = entry
+            del index[current_name]
+        return index.write()
 
     @utils.arglist_method
     def checkout(self, files):
         pass
 
     @utils.arglist_method
-    def reset(self, files):
+    def reset(self, files, commit='HEAD'):
         pass
 
     def rm_all(self):
