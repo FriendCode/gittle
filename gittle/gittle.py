@@ -205,9 +205,12 @@ class Gittle(object):
     def mv(self, files_pair):
         index = self.index
         files_in_index = filter(lambda f: f[0] in index, files_pair)
-        map(self.mv_index, files_in_index)
         map(self.mv_fs, files_in_index)
-        return index.write()
+        old_files = map(utils.first, files_in_index)
+        new_files = map(utils.last, files_in_index)
+        self.rm(old_files)
+        self.add(new_files)
+        return
 
     @utils.arglist_method
     def checkout(self, files):
