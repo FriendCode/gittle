@@ -48,7 +48,6 @@ class Gittle(object):
         return utils.globers_to_regex(globers)
 
     @property
-    @utils.memoize
     def index(self):
         return self.repo.open_index()
 
@@ -145,6 +144,7 @@ class Gittle(object):
             if not f in self.index:
                 continue
             del self.index[f]
+        return self.index.write()
 
     # Like: git mv
     @utils.arglist_method
