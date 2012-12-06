@@ -48,6 +48,10 @@ class Gittle(object):
         return utils.globers_to_regex(globers)
 
     @property
+    def last_commit(self):
+        return self.repo[self.repo.head()]
+
+    @property
     def index(self):
         return self.repo.open_index()
 
@@ -131,6 +135,33 @@ class Gittle(object):
     @utils.transform(set)
     def untracked_files(self):
         return self.trackable_files - self.tracked_files
+
+    @property
+    @utils.transform(set)
+    def modified_staged_files(self):
+        """Checks if the file has changed since last commit"""
+        timestamp = self.last_commit.commit_time
+        index = self.index
+        return [
+            f
+            for f in self.tracked_files
+            if index[f][1][0] > timestamp
+        ]
+
+    @property
+    @utils.transform(set)
+    def modified_unstaged_files(self):
+        timestamp = self.last_commit.commit_time
+        return [
+            f
+            for f in self.tracked_files
+            if os.stat(f).st_mtime > timestamp
+        ]
+
+    @property
+    @utils.transform(set)
+    def modified_files(self):
+        return self.modified_staged_files | self.modified_unstaged_files
 
     # Like: git add
     @utils.arglist_method
