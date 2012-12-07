@@ -12,6 +12,7 @@ from . import utils
 
 
 class Gittle(object):
+    DEFAULT_BRANCH = 'master'
     DEFAULT_MESSAGE = '**No Message**'
     DEFAULT_USER_INFO = {
         'name': None,
@@ -42,6 +43,14 @@ class Gittle(object):
             self.ignore_filter,
         ]
 
+        # Generate a branch selector (used for pushing)
+        def _wants_branch(self, branch_name=None):
+            branch_name = branch_name or self.DEFAULT_BRANCH
+            def wants_func(have, wants):
+                refs_key = "refs/heads/%s" % branch_name
+                return {refs_key : repo.refs["HEAD"]}
+            return wants_func
+
     def _get_ignore_regexes(self):
         gitignore_filename = os.path.join(self.path, '.gitignore')
         if not os.path.exists(gitignore_filename):
@@ -68,6 +77,11 @@ class Gittle(object):
     def init_bare(cls, path):
         repo = DRepo.init_bare(path)
         return cls(repo)
+
+    def push(self, origin_uri, branch_name=None, **kwargs):
+        selector = self._wants_branch(branch_name=branch_name)
+        client, src = get_transport_and_path(origin_uri, **kwargs)
+        return client.send_pack(src, selector, self.repo.object_store.generate_pack_contents)
 
     @classmethod
     def clone_remote(cls, remote_path, local_path, mkdir=True, **kwargs):
