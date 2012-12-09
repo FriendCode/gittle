@@ -54,7 +54,7 @@ class Gittle(object):
             new = {
                 k: refs[k]
                 for k in same
-                if refs[k] != old[k]]
+                if refs[k] != old[k]
             }
             dfky = set(refs) - set(new)
             dfrnt = {
