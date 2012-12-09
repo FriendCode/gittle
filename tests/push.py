@@ -1,3 +1,5 @@
+import StringIO
+import paramiko
 from gittle import Gittle
 
 
