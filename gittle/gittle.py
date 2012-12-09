@@ -101,9 +101,12 @@ class Gittle(object):
         return client.send_pack(src, selector, self.repo.object_store.generate_pack_contents, sys.stdout.write)
 
     @classmethod
-    def clone_remote(cls, remote_path, local_path, mkdir=True):
+    def clone_remote(cls, remote_path, local_path, authenticator=None, mkdir=True, **kwargs):
         """Clone a remote repository"""
-        kwargs = self.authenticator.kwargs()
+        if authenticator:
+            client_kwargs = authenticator.kwargs()
+        else:
+            client_kwargs = kwargs
 
         if mkdir and not(os.path.exists(local_path)):
             os.makedirs(local_path)
@@ -112,7 +115,7 @@ class Gittle(object):
         local_repo = DRepo.init(local_path)
 
         # Get client
-        client, host_path = get_transport_and_path(remote_path, **kwargs)
+        client, host_path = get_transport_and_path(remote_path, **client_kwargs)
 
         # Fetch data from remote repository
         remote_refs = client.fetch(host_path, local_repo)
