@@ -10,6 +10,7 @@ from dulwich.index import build_index_from_tree
 
 # Local imports
 from . import utils
+from . import auth
 
 
 class Gittle(object):
@@ -25,7 +26,7 @@ class Gittle(object):
         r'./.git/',
     ]
 
-    def __init__(self, repo_or_path):
+    def __init__(self, repo_or_path, *args, **kwargs):
         if isinstance(repo_or_path, DRepo):
             self.repo = repo_or_path
         elif isinstance(repo_or_path, basestring):
@@ -43,6 +44,13 @@ class Gittle(object):
         self.filters = [
             self.ignore_filter,
         ]
+
+        # Get authenticator
+        self.auth(*args, **kwargs)
+
+    def auth(self, *args, **kwargs):
+        self.authenticator = auth.GitAuthentication(*args, **kwargs)
+        return self.authenticator
 
     # Generate a branch selector (used for pushing)
     def _wants_branch(self, branch_name=None):
@@ -62,7 +70,9 @@ class Gittle(object):
                 for k in dfky
                 if k != 'HEAD'
             }
-            return dict(new.items() + dfrnt.items())
+            ret = dict(new.items() + dfrnt.items())
+            print('DICT REFS', ret)
+            return ret
         return wants_func
 
     def _get_ignore_regexes(self):
@@ -72,6 +82,10 @@ class Gittle(object):
         lines = open(gitignore_filename).readlines()
         globers = map(lambda line: line.rstrip(), lines)
         return utils.globers_to_regex(globers)
+
+    # Get the absolute path for a file in the git repo
+    def abspath(self, repo_file):
+        return os.path.join(self.path, repo_file)
 
     @property
     def last_commit(self):
@@ -92,14 +106,16 @@ class Gittle(object):
         repo = DRepo.init_bare(path)
         return cls(repo)
 
-    def push(self, origin_uri, branch_name=None, **kwargs):
+    def push_to(self, origin_uri, branch_name=None):
+        kwargs = self.authenticator.kwargs()
         selector = self._wants_branch(branch_name=branch_name)
         client, src = get_transport_and_path(origin_uri, **kwargs)
         return client.send_pack(src, selector, self.repo.object_store.generate_pack_contents, sys.stdout.write)
 
     @classmethod
-    def clone_remote(cls, remote_path, local_path, mkdir=True, **kwargs):
+    def clone_remote(cls, remote_path, local_path, mkdir=True):
         """Clone a remote repository"""
+        kwargs = self.authenticator.kwargs()
 
         if mkdir and not(os.path.exists(local_path)):
             os.makedirs(local_path)
@@ -194,7 +210,7 @@ class Gittle(object):
         return [
             f
             for f in self.tracked_files
-            if os.stat(f).st_mtime > timestamp
+            if os.stat(self.abspath(f)).st_mtime > timestamp
         ]
 
     @property
