@@ -48,9 +48,21 @@ class Gittle(object):
     def _wants_branch(self, branch_name=None):
         branch_name = branch_name or self.DEFAULT_BRANCH
 
-        def wants_func(current_ref_dict):
-            refs_key = "refs/heads/%s" % branch_name
-            return {refs_key: self.repo.refs["HEAD"]}
+        def wants_func(old):
+            refs = self.repo.get_refs()
+            same = set(refs).intersection(old)
+            new = {
+                k: refs[k]
+                for k in same
+                if refs[k] != old[k]]
+            }
+            dfky = set(refs) - set(new)
+            dfrnt = {
+                k: refs[k]
+                for k in dfky
+                if k != 'HEAD'
+            }
+            return dict(new.items() + dfrnt.items())
         return wants_func
 
     def _get_ignore_regexes(self):
