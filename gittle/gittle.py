@@ -58,7 +58,9 @@ class Gittle(object):
 
         def wants_func(old):
             refs_key = "refs/heads/%s" % branch_name
-            return {refs_key : repo.refs["HEAD"]}
+            return {
+                refs_key: self.repo.refs["HEAD"]
+            }
         return wants_func
 
     def _get_ignore_regexes(self):
