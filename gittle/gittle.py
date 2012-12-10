@@ -198,6 +198,12 @@ class Gittle(object):
     def commit_files(self, files, *args, **kwargs):
         pass
 
+    # Push all local commits
+    # and pull all remote commits
+    def sync(self, origin_uri=None):
+        self.push(origin_uri)
+        return self.pull(origin_uri)
+
     @property
     @utils.transform(set)
     def tracked_files(self):
