@@ -70,21 +70,41 @@ def arglist_method(func):
     return f
 
 
-# Cache calls
-def memoize(func):
-    """Cache a functions output for a given set of arguments"""
-    cache = {}
+class Memoizer(object):
+    def __init__(self, func):
+        self.func = func
+        self.cache = {}
 
-    @wraps(func)
-    def f(*args, **kwargs):
+    def cache_key(self, args, kwargs):
         sorted_kwargs = kwargs.items()
         sorted_kwargs.sort()
         cache_key = hash(args + tuple(sorted_kwargs))
-        if cache_key in cache:
-            return cache[cache_key]
-        cache[cache_key] = func(*args, **kwargs)
-        return cache[cache_key]
-    return f
+        return cache_key
+
+    def has_cache(self, cache_key):
+        return cache_key in self.cache
+
+    def get_cache(self, cache_key):
+        return self.cache[cache_key]
+
+    def set_cache(self, cache_key, value):
+        self.cache[cache_key] = value
+
+    def clear(self):
+        self.cache = {}
+
+    def __call__(self, *args, **kwargs):
+        cache_key = self.cache_key(args, kwargs)
+        if not self.has_cache(cache_key):
+            value = self.func(*args, **kwargs)
+            self.set_cache(cache_key, value)
+        return self.get_cache(cache_key)
+
+
+# Cache calls
+def memoize(func):
+    """Cache a functions output for a given set of arguments"""
+    return wraps(func)(Memoizer(func))
 
 
 def transform(transform_func):
@@ -193,3 +213,14 @@ def subpaths(root_path, filters=None):
 @arglist
 def globers_to_regex(globers):
     return map(fnmatch.translate, globers)
+
+
+def true_only(iterable):
+    return filter(bool, iterable)
+
+
+def first_true(iterable):
+    true_values = true_only(iterable)
+    if true_values:
+        return true_values[0]
+    return None

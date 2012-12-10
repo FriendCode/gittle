@@ -1,6 +1,7 @@
 # Python imports
 import os
 import copy
+from hashlib import sha1
 
 # Dulwich imports
 from dulwich.repo import Repo as DRepo
@@ -29,6 +30,15 @@ class Gittle(object):
         # Hide git directory
         r'./.git/',
     ]
+
+    # Name pattern truths
+    # Used for detecting if files are :
+    # - deleted
+    # - added
+    # - changed
+    PATTERN_ADDED = (False, True)
+    PATTERN_REMOVED = (True, False)
+    PATTERN_MODIFIED = (True, True)
 
     def __init__(self, repo_or_path, origin_uri=None, auth=None, *args, **kwargs):
         if isinstance(repo_or_path, DRepo):
@@ -84,6 +94,10 @@ class Gittle(object):
     # Get the absolute path for a file in the git repo
     def abspath(self, repo_file):
         return os.path.join(self.path, repo_file)
+
+    # Get the relative path from the absolute path
+    def relpath(self, abspath):
+        return os.path.relpath(abspath, self.path)
 
     @property
     def last_commit(self):
@@ -204,6 +218,19 @@ class Gittle(object):
         self.push(origin_uri)
         return self.pull(origin_uri)
 
+    def lookup_entry(self, path):
+        if path not in self:
+            raise KeyError
+
+        abspath = self.abspath(path)
+
+        with open(abspath, 'rb') as git_file:
+            data = git_file.read()
+            s = sha1()
+            s.update("blob %u\0" % len(data))
+            s.update(data)
+        return (s.hexdigest(), os.stat(abspath).st_mode)
+
     @property
     @utils.transform(set)
     def tracked_files(self):
@@ -220,6 +247,7 @@ class Gittle(object):
         return utils.subpaths(self.path, filters=self.filters)
 
     @property
+    @utils.memoize
     @utils.transform(set)
     def trackable_files(self):
         return self.raw_files - self.ignored_files
@@ -229,10 +257,11 @@ class Gittle(object):
     def untracked_files(self):
         return self.trackable_files - self.tracked_files
 
+    """
     @property
     @utils.transform(set)
     def modified_staged_files(self):
-        """Checks if the file has changed since last commit"""
+        "Checks if the file has changed since last commit"
         timestamp = self.last_commit.commit_time
         index = self.index
         return [
@@ -240,6 +269,44 @@ class Gittle(object):
             for f in self.tracked_files
             if index[f][1][0] > timestamp
         ]
+    """
+
+    # Return a list of tuples
+    # representing the changed elements in the git tree
+    def _changed_entries(self):
+        index = self.index
+
+        obj_sto = self.repo.object_store
+        tree_id = self.repo['HEAD'].tree
+        names = self.trackable_files
+
+        # Format = [((old_name, new_name), (old_mode, new_mode), (old_sha, new_sha)), ...]
+        tree_diff = index.changes_from_tree(names, self.lookup_entry, obj_sto, tree_id, want_unchanged=False)
+        return tree_diff
+
+    def _changed_entries_by_pattern(self, pattern):
+        changed_entries = self._changed_entries()
+        filtered_names = [
+            utils.first_true(names)
+            for names, modes, sha in changed_entries
+            if map(bool, names) == pattern and utils.first_true(names)
+        ]
+        return filtered_names
+
+    @property
+    @utils.transform(set)
+    def removed_files(self):
+        return self._changed_entries_by_pattern(self.PATTERN_REMOVED)
+
+    @property
+    @utils.transform(set)
+    def added_files(self):
+        return self._changed_entries_by_pattern(self.PATTERN_ADDED)
+
+    @property
+    @utils.transform(set)
+    def modified_files(self):
+        return self._changed_entries_by_pattern(self.PATTERN_MODIFIED)
 
     @property
     @utils.transform(set)
@@ -251,13 +318,12 @@ class Gittle(object):
             if os.stat(self.abspath(f)).st_mtime > timestamp
         ]
 
-    def _lookup_file(self, filename):
-        return
-
+    """
     @property
     @utils.transform(set)
     def modified_files(self):
         return self.modified_staged_files | self.modified_unstaged_files
+    """
 
     # Like: git add
     @utils.arglist_method
