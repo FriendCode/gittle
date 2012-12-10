@@ -6,7 +6,7 @@ from hashlib import sha1
 # Dulwich imports
 from dulwich.repo import Repo as DRepo
 from dulwich.client import get_transport_and_path
-from dulwich.index import build_index_from_tree
+from dulwich.index import build_index_from_tree, changes_from_tree
 
 # Local imports
 from . import utils
@@ -274,14 +274,12 @@ class Gittle(object):
     # Return a list of tuples
     # representing the changed elements in the git tree
     def _changed_entries(self):
-        index = self.index
-
         obj_sto = self.repo.object_store
         tree_id = self.repo['HEAD'].tree
         names = self.trackable_files
 
         # Format = [((old_name, new_name), (old_mode, new_mode), (old_sha, new_sha)), ...]
-        tree_diff = index.changes_from_tree(names, self.lookup_entry, obj_sto, tree_id, want_unchanged=False)
+        tree_diff = changes_from_tree(names, self.lookup_entry, obj_sto, tree_id, want_unchanged=False)
         return tree_diff
 
     def _changed_entries_by_pattern(self, pattern):
