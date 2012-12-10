@@ -131,42 +131,45 @@ class Gittle(object):
         return self.push_to(origin_uri, branch_name)
 
     def pull_from(self, origin_uri, branch_name=None):
-        client, remote_path = self.get_client(origin_uri)
-        return client.fetch(remote_path, self.repo)
+        return self.fetch(origin_uri)
 
     # Like: git pull
     def pull(self, origin_uri=None, branch_name=None):
         return self.pull_from(origin_uri, branch_name)
 
+    def fetch(self, origin_uri=None):
+        # Get client
+        client, remote_path = self.get_client(origin_uri=origin_uri)
+
+        # Fetch data from remote repository
+        remote_refs = client.fetch(remote_path, self.repo)
+
+        # Update head
+        self.repo["HEAD"] = remote_refs["HEAD"]
+
+        # Rebuild index
+        build_index_from_tree(self.repo.path, self.repo.index_path(),
+                        self.repo.object_store, self.repo['HEAD'].tree)
+
+        return self
+
     @classmethod
     def clone_remote(cls, origin_uri, local_path, auth=None, mkdir=True, **kwargs):
         """Clone a remote repository"""
-        if auth:
-            client_kwargs = auth.kwargs()
-        else:
-            client_kwargs = kwargs
-
         if mkdir and not(os.path.exists(local_path)):
             os.makedirs(local_path)
 
         # Initialize the local repository
         local_repo = DRepo.init(local_path)
 
-        # Get client
-        client, remote_path = get_transport_and_path(origin_uri, **client_kwargs)
+        repo = cls(local_repo, origin_uri=origin_uri, auth=auth)
 
-        # Fetch data from remote repository
-        remote_refs = client.fetch(remote_path, local_repo)
-
-        # Update head
-        local_repo["HEAD"] = remote_refs["HEAD"]
-
-        # Rebuild index
-        build_index_from_tree(local_repo.path, local_repo.index_path(),
-                        local_repo.object_store, local_repo['HEAD'].tree)
+        repo.fetch()
 
         # Add origin
-        return cls(local_repo, origin_uri=origin_uri)
+        # TODO
+
+        return repo
 
     @classmethod
     def clone(cls):
