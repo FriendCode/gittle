@@ -1,6 +1,6 @@
 from gittle import Gittle
 
-from .config import repo_path
+from config import repo_path
 
 g = Gittle(repo_path)
 
