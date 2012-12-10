@@ -8,5 +8,5 @@ g = Gittle(repo_path, origin_url=repo_url)
 # Authentication
 g.auth(pkey=key_file)
 
-# Do push
-g.push()
+# Do pull
+g.pull()

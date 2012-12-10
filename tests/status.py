@@ -1,7 +1,8 @@
 from gittle import Gittle
 
+from .config import repo_path
 
-g = Gittle('.')
+g = Gittle(repo_path)
 
 
 def print_files(group_name, paths):
