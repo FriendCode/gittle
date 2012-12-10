@@ -14,7 +14,11 @@ import paramiko
 from gittle import utils
 
 
-class GitAuthentication(object):
+# Exports
+__all__ = ('GittleAuth',)
+
+
+class GittleAuth(object):
     KWARG_KEYS = (
         'username',
         'password',

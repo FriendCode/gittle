@@ -1,6 +1,5 @@
 # Python imports
 import os
-import sys
 import copy
 
 # Dulwich imports
@@ -11,6 +10,11 @@ from dulwich.index import build_index_from_tree
 # Local imports
 from . import utils
 from . import auth
+from .exceptions import InvalidRemoteUrl
+
+
+# Exports
+__all__ = ('Gittle',)
 
 
 class Gittle(object):
@@ -26,7 +30,7 @@ class Gittle(object):
         r'./.git/',
     ]
 
-    def __init__(self, repo_or_path, *args, **kwargs):
+    def __init__(self, repo_or_path, origin_uri=None, auth=None, *args, **kwargs):
         if isinstance(repo_or_path, DRepo):
             self.repo = repo_or_path
         elif isinstance(repo_or_path, basestring):
@@ -37,6 +41,9 @@ class Gittle(object):
         # Set path
         self.path = self.repo.path
 
+        # The remote url
+        self.origin_uri = origin_uri
+
         # Build ignore filter
         self.hidden_regexes = copy.copy(self.HIDDEN_REGEXES)
         self.hidden_regexes.extend(self._get_ignore_regexes())
@@ -46,10 +53,13 @@ class Gittle(object):
         ]
 
         # Get authenticator
-        self.auth(*args, **kwargs)
+        if auth:
+            self.authenticator = auth
+        else:
+            self.auth(*args, **kwargs)
 
     def auth(self, *args, **kwargs):
-        self.authenticator = auth.GitAuthentication(*args, **kwargs)
+        self.authenticator = auth.GittleAuth(*args, **kwargs)
         return self.authenticator
 
     # Generate a branch selector (used for pushing)
@@ -94,17 +104,45 @@ class Gittle(object):
         repo = DRepo.init_bare(path)
         return cls(repo)
 
+    def get_client(self, origin_uri=None, **kwargs):
+        # Get the remote URL
+        origin_uri = origin_uri or self.origin_uri
+
+        # Fail if inexistant
+        if not origin_uri:
+            raise InvalidRemoteUrl()
+
+        client_kwargs = {}
+        auth_kwargs = self.authenticator.kwargs()
+
+        client_kwargs.update(auth_kwargs)
+        client_kwargs.update(kwargs)
+
+        client, remote_path = get_transport_and_path(origin_uri, **client_kwargs)
+        return client, remote_path
+
     def push_to(self, origin_uri, branch_name=None):
-        kwargs = self.authenticator.kwargs()
         selector = self._wants_branch(branch_name=branch_name)
-        client, src = get_transport_and_path(origin_uri, **kwargs)
-        return client.send_pack(src, selector, self.repo.object_store.generate_pack_contents, sys.stdout.write)
+        client, remote_path = self.get_client(origin_uri)
+        return client.send_pack(remote_path, selector, self.repo.object_store.generate_pack_contents)
+
+    # Like: git push
+    def push(self, origin_uri=None, branch_name=None):
+        return self.push_to(origin_uri, branch_name)
+
+    def pull_from(self, origin_uri, branch_name=None):
+        client, remote_path = self.get_client(origin_uri)
+        return client.fetch(remote_path, self.repo)
+
+    # Like: git pull
+    def pull(self, origin_uri=None, branch_name=None):
+        return self.pull_from(origin_uri, branch_name)
 
     @classmethod
-    def clone_remote(cls, remote_path, local_path, authenticator=None, mkdir=True, **kwargs):
+    def clone_remote(cls, origin_uri, local_path, auth=None, mkdir=True, **kwargs):
         """Clone a remote repository"""
-        if authenticator:
-            client_kwargs = authenticator.kwargs()
+        if auth:
+            client_kwargs = auth.kwargs()
         else:
             client_kwargs = kwargs
 
@@ -115,10 +153,10 @@ class Gittle(object):
         local_repo = DRepo.init(local_path)
 
         # Get client
-        client, host_path = get_transport_and_path(remote_path, **client_kwargs)
+        client, remote_path = get_transport_and_path(origin_uri, **client_kwargs)
 
         # Fetch data from remote repository
-        remote_refs = client.fetch(host_path, local_repo)
+        remote_refs = client.fetch(remote_path, local_repo)
 
         # Update head
         local_repo["HEAD"] = remote_refs["HEAD"]
@@ -128,7 +166,7 @@ class Gittle(object):
                         local_repo.object_store, local_repo['HEAD'].tree)
 
         # Add origin
-        return cls(local_repo)
+        return cls(local_repo, origin_uri=origin_uri)
 
     @classmethod
     def clone(cls):
@@ -154,7 +192,7 @@ class Gittle(object):
             message=message)
 
     # Commit only a set of files
-    def commit_files(self):
+    def commit_files(self, files, *args, **kwargs):
         pass
 
     @property
@@ -203,6 +241,9 @@ class Gittle(object):
             for f in self.tracked_files
             if os.stat(self.abspath(f)).st_mtime > timestamp
         ]
+
+    def _lookup_file(self, filename):
+        return
 
     @property
     @utils.transform(set)
