@@ -28,7 +28,7 @@ class Gittle(object):
 
     HIDDEN_REGEXES = [
         # Hide git directory
-        r'.*\.git\/.*',
+        r'.*\/\.git\/.*',
     ]
 
     # Name pattern truths
@@ -44,7 +44,8 @@ class Gittle(object):
         if isinstance(repo_or_path, DRepo):
             self.repo = repo_or_path
         elif isinstance(repo_or_path, basestring):
-            self.repo = DRepo(repo_or_path)
+            path = os.path.abspath(repo_or_path)
+            self.repo = DRepo(path)
         else:
             raise Exception('Gittle must be initialized with either a dulwich repository or a string to the path')
 
@@ -67,6 +68,10 @@ class Gittle(object):
             self.authenticator = auth
         else:
             self.auth(*args, **kwargs)
+
+    @property
+    def git_dir(self):
+        return self.repo.controldir()
 
     def auth(self, *args, **kwargs):
         self.authenticator = auth.GittleAuth(*args, **kwargs)
