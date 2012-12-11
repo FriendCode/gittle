@@ -302,7 +302,7 @@ class Gittle(object):
             if tuple(map(bool, names)) == pattern and utils.first_true(names)
         ]
 
-        return map(self.relpath, filtered_paths)
+        return filtered_paths
 
     @property
     @utils.transform(set)
