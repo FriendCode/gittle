@@ -231,6 +231,10 @@ class Gittle(object):
 
         abspath = self.abspath(relpath)
 
+        print('relpath =', relpath)
+        print('abspath =', abspath)
+        print('self.path =', self.path)
+
         with open(abspath, 'rb') as git_file:
             data = git_file.read()
             s = sha1()
