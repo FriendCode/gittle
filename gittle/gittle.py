@@ -223,9 +223,11 @@ class Gittle(object):
         self.push(origin_uri)
         return self.pull(origin_uri)
 
-    def lookup_entry(self, abspath):
-        if abspath not in self.trackable_files:
+    def lookup_entry(self, relpath):
+        if relpath not in self.trackable_files:
             raise KeyError
+
+        abspath = self.abspath(relpath)
 
         with open(abspath, 'rb') as git_file:
             data = git_file.read()
