@@ -165,7 +165,7 @@ def abspaths_only(paths_couple):
 
 def clean_relative_paths(paths):
     return [
-        p[2:]
+        p[2:] if p.startswith('./') else p
         for p in paths
     ]
 
@@ -176,18 +176,32 @@ def dir_subpaths(root_path):
     for dirname, dirnames, filenames in os.walk(root_path):
 
         # Add directory paths
-        paths.extend([
-            # path, abspath
-            (subdirname, os.path.join(dirname, subdirname))
+        abs_dirnames = [
+            os.path.join(dirname, subdirname)
             for subdirname in dirnames
-        ])
+        ]
+        rel_dirnames = [
+            os.path.relpath(abs_dirname, root_path)
+            for abs_dirname in abs_dirnames
+        ]
+        paths.extend(zip(
+            rel_dirnames,
+            abs_dirnames,
+        ))
 
-        # Add file paths
-        paths.extend([
-            # path, abspath
-            (filename, os.path.join(dirname, filename))
+        abs_filenames = [
+            os.path.join(dirname, filename)
             for filename in filenames
-        ])
+        ]
+        rel_filenames = [
+            os.path.relpath(abs_filename, root_path)
+            for abs_filename in abs_filenames
+        ]
+        paths.extend(zip(
+            rel_filenames,
+            abs_filenames,
+        ))
+
     return paths
 
 
@@ -206,8 +220,8 @@ def subpaths(root_path, filters=None):
 
     # Do filtering
     filtered_paths = filter(filter_func, paths)
-    abs_filtered_paths = abspaths_only(filtered_paths)
-    return clean_relative_paths(abs_filtered_paths)
+    relative_filtered_paths = map(first, filtered_paths)
+    return clean_relative_paths(relative_filtered_paths)
 
 
 @arglist

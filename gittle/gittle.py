@@ -28,7 +28,7 @@ class Gittle(object):
 
     HIDDEN_REGEXES = [
         # Hide git directory
-        r'./.git/',
+        r'.*\.git\/.*',
     ]
 
     # Name pattern truths
@@ -218,11 +218,9 @@ class Gittle(object):
         self.push(origin_uri)
         return self.pull(origin_uri)
 
-    def lookup_entry(self, path):
-        if path not in self:
+    def lookup_entry(self, abspath):
+        if abspath not in self.trackable_files:
             raise KeyError
-
-        abspath = self.abspath(path)
 
         with open(abspath, 'rb') as git_file:
             data = git_file.read()
@@ -280,31 +278,34 @@ class Gittle(object):
 
         # Format = [((old_name, new_name), (old_mode, new_mode), (old_sha, new_sha)), ...]
         tree_diff = changes_from_tree(names, self.lookup_entry, obj_sto, tree_id, want_unchanged=False)
-        return tree_diff
+        return list(tree_diff)
 
+    @utils.transform(set)
     def _changed_entries_by_pattern(self, pattern):
         changed_entries = self._changed_entries()
-        filtered_names = [
+        filtered_paths = [
             utils.first_true(names)
             for names, modes, sha in changed_entries
-            if map(bool, names) == pattern and utils.first_true(names)
+            if tuple(map(bool, names)) == pattern and utils.first_true(names)
         ]
-        return filtered_names
+
+        return map(self.relpath, filtered_paths)
 
     @property
     @utils.transform(set)
     def removed_files(self):
-        return self._changed_entries_by_pattern(self.PATTERN_REMOVED)
+        return self._changed_entries_by_pattern(self.PATTERN_REMOVED) - self.ignored_files
 
     @property
     @utils.transform(set)
     def added_files(self):
-        return self._changed_entries_by_pattern(self.PATTERN_ADDED)
+        return self._changed_entries_by_pattern(self.PATTERN_ADDED) - self.ignored_files
 
     @property
     @utils.transform(set)
     def modified_files(self):
-        return self._changed_entries_by_pattern(self.PATTERN_MODIFIED)
+        modified_files = self._changed_entries_by_pattern(self.PATTERN_MODIFIED) - self.ignored_files
+        return modified_files
 
     @property
     @utils.transform(set)
