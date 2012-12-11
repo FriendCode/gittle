@@ -98,7 +98,9 @@ class Gittle(object):
 
     # Get the absolute path for a file in the git repo
     def abspath(self, repo_file):
-        return os.path.join(self.path, repo_file)
+        return os.path.abspath(
+            os.path.join(self.path, repo_file)
+        )
 
     # Get the relative path from the absolute path
     def relpath(self, abspath):
