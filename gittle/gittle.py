@@ -2,6 +2,7 @@
 import os
 import copy
 from hashlib import sha1
+from shutil import rmtree
 
 # Dulwich imports
 from dulwich.repo import Repo as DRepo
@@ -151,6 +152,17 @@ class Gittle(object):
     def push(self, origin_uri=None, branch_name=None):
         return self.push_to(origin_uri, branch_name)
 
+    # Not recommended at ALL ... !!!
+    def dirty_pull_from(self, origin_uri, branch_name=None):
+        # Remove all previously existing data
+        rmtree(self.path)
+        os.makedirs(self.path)
+        self.repo = DRepo.init(self.path)
+
+        # Fetch brand new copy from remote
+        return self.pull_from(origin_uri, branch_name)
+
+
     def pull_from(self, origin_uri, branch_name=None):
         return self.fetch(origin_uri)
 
@@ -158,21 +170,25 @@ class Gittle(object):
     def pull(self, origin_uri=None, branch_name=None):
         return self.pull_from(origin_uri, branch_name)
 
-    def fetch(self, origin_uri=None):
+    def fetch_remote(self, origin_uri=None):
         # Get client
         client, remote_path = self.get_client(origin_uri=origin_uri)
 
         # Fetch data from remote repository
         remote_refs = client.fetch(remote_path, self.repo)
 
+        return remote_refs
+
+    def fetch(self, origin_uri=None):
+        # Remote refs
+        remote_refs = self.fetch_remote(origin_uri)
+
         # Update head
         self.repo["HEAD"] = remote_refs["HEAD"]
 
-        # Rebuild index
-        build_index_from_tree(self.repo.path, self.repo.index_path(),
-                        self.repo.object_store, self.repo['HEAD'].tree)
+        # Checkout modifications to working directory
+        return self.checkout_all()
 
-        return self
 
     @classmethod
     def clone_remote(cls, origin_uri, local_path, auth=None, mkdir=True, **kwargs):
@@ -364,6 +380,11 @@ class Gittle(object):
         self.add(old_files)
         return
 
+    def checkout_all(self):
+        # Rebuild index
+        return build_index_from_tree(self.repo.path, self.repo.index_path(),
+                        self.repo.object_store, self.repo['HEAD'].tree)
+
     @utils.arglist_method
     def checkout(self, files):
         pass
@@ -375,3 +396,19 @@ class Gittle(object):
     def rm_all(self):
         self.index.clear()
         return self.index.write()
+
+    # Get the nth parent back for a given commit
+    def _get_commits_nth_parent(self, commit, n):
+        parents = commit.parents
+        if n == 0 or not parents:
+            return commit
+        parent_sha = parents[0]
+        parent = self.repo[parent_sha]
+        return self._get_commits_nth_parent(parent, n - 1)
+
+    def _parse_reference(self, ref_string):
+        # COMMIT_REF~x
+        if '~' in ref_string:
+            commit_ref, count = ref_string.split('~')
+            return self._get_commits_nth_parent(commit, count)
+        return self.repo[ref_string]
