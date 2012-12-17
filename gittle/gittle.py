@@ -213,12 +213,12 @@ class Gittle(object):
         """Clone a local repository"""
         pass
 
-    def _commit(self, commiter=None, author=None, message=None, *args, **kwargs):
+    def _commit(self, committer=None, author=None, message=None, *args, **kwargs):
         message = message or self.DEFAULT_MESSAGE
         return self.repo.do_commit(
             message=message,
             author=author,
-            commmiter=commiter)
+            commmiter=committer)
 
     # Like: git commmit -a
     def commit(self, name=None, email=None, message=None):
@@ -227,7 +227,7 @@ class Gittle(object):
             'email': email,
         }
         return self._commit(
-            commiter=user_info,
+            committer=user_info,
             author=user_info,
             message=message)
 
