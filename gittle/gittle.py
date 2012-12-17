@@ -218,7 +218,7 @@ class Gittle(object):
         return self.repo.do_commit(
             message=message,
             author=author,
-            commmiter=committer)
+            committer=committer)
 
     # Like: git commmit -a
     def commit(self, name=None, email=None, message=None):
