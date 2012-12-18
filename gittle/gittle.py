@@ -214,6 +214,7 @@ class Gittle(object):
         pass
 
     def _commit(self, committer=None, author=None, message=None, *args, **kwargs):
+        self.add(self.modified_files)
         message = message or self.DEFAULT_MESSAGE
         return self.repo.do_commit(
             message=message,
@@ -351,8 +352,11 @@ class Gittle(object):
 
     # Like: git add
     @utils.arglist_method
-    def add(self, files):
+    def stage(self, files):
         return self.repo.stage(files)
+
+    def add(self, *args, **kwargs):
+        return self.stage(*args, **kwargs)
 
     # Like: git rm
     @utils.arglist_method
