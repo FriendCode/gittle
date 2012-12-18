@@ -43,15 +43,13 @@ def list_from_args(args):
     if not same_type:
         raise Exception('Expected uniform arguments of same type !')
 
+
     # Flatten iterables
     # ['x', 'y'], ...
-    if arg_type == list:
-        flattened_args = sum(args, [])
+    if is_list:
+        args_lists = map(list, args)
+        flattened_args = sum(args_lists, [])
         return flattened_args
-    elif arg_type == tuple:
-        flattened_args = list(sum(args, ()))
-        return flattened_args
-
     # Flatten set
     # 'x', 'y'
     return list(args)
