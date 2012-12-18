@@ -3,6 +3,7 @@ import os
 import copy
 from hashlib import sha1
 from shutil import rmtree
+import logging
 
 # Dulwich imports
 from dulwich.repo import Repo as DRepo
@@ -69,6 +70,16 @@ class Gittle(object):
             self.authenticator = auth
         else:
             self.auth(*args, **kwargs)
+
+    def _format_author(self, name, email):
+        return "%s <%s>" % (name, email)
+
+    def _format_userinfo(self, userinfo):
+        name = userinfo.get('name')
+        email = userinfo.get('email')
+        if name and email:
+            return self._format_author(name, email)
+        return None
 
     @property
     def git_dir(self):
@@ -162,7 +173,6 @@ class Gittle(object):
         # Fetch brand new copy from remote
         return self.pull_from(origin_uri, branch_name)
 
-
     def pull_from(self, origin_uri, branch_name=None):
         return self.fetch(origin_uri)
 
@@ -214,12 +224,16 @@ class Gittle(object):
         pass
 
     def _commit(self, committer=None, author=None, message=None, *args, **kwargs):
-        self.add(self.modified_files)
+        modified_files = self.modified_files
+        logging.warning("STAGING : %s" % modified_files)
+        self.add(modified_files)
         message = message or self.DEFAULT_MESSAGE
+        author_msg = self._format_userinfo(author)
+        committer_msg = self._format_userinfo(committer)
         return self.repo.do_commit(
             message=message,
-            author=author,
-            committer=committer)
+            author=author_msg,
+            committer=committer_msg)
 
     # Like: git commmit -a
     def commit(self, name=None, email=None, message=None):
