@@ -49,7 +49,7 @@ def list_from_args(args):
         flattened_args = sum(args, [])
         return flattened_args
     elif arg_type == tuple:
-        flattened_args = sum(args, ())
+        flattened_args = list(sum(args, ()))
         return flattened_args
 
     # Flatten set
