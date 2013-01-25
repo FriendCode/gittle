@@ -1,19 +1,23 @@
+# From the future
+from __future__ import absolute_import
+
 # Python imports
 import os
 import copy
 from hashlib import sha1
 from shutil import rmtree
+from functools import partial
 import logging
 
 # Dulwich imports
-from dulwich.repo import Repo as DRepo
+from dulwich.repo import Repo as DulwichRepo
 from dulwich.client import get_transport_and_path
 from dulwich.index import build_index_from_tree, changes_from_tree
 
 # Local imports
-from . import utils
-from . import auth
-from .exceptions import InvalidRemoteUrl
+from gittle import utils
+from gittle.auth import GittleAuth
+from gittle.exceptions import InvalidRemoteUrl
 
 
 # Exports
@@ -43,11 +47,11 @@ class Gittle(object):
     PATTERN_MODIFIED = (True, True)
 
     def __init__(self, repo_or_path, origin_uri=None, auth=None, *args, **kwargs):
-        if isinstance(repo_or_path, DRepo):
+        if isinstance(repo_or_path, DulwichRepo):
             self.repo = repo_or_path
         elif isinstance(repo_or_path, basestring):
             path = os.path.abspath(repo_or_path)
-            self.repo = DRepo(path)
+            self.repo = DulwichRepo(path)
         else:
             raise Exception('Gittle must be initialized with either a dulwich repository or a string to the path')
 
@@ -86,7 +90,7 @@ class Gittle(object):
         return self.repo.controldir()
 
     def auth(self, *args, **kwargs):
-        self.authenticator = auth.GittleAuth(*args, **kwargs)
+        self.authenticator = GittleAuth(*args, **kwargs)
         return self.authenticator
 
     # Generate a branch selector (used for pushing)
@@ -129,12 +133,12 @@ class Gittle(object):
     @classmethod
     def init(cls, path):
         """Initialize a repository"""
-        repo = DRepo.init(path)
+        repo = DulwichRepo.init(path)
         return cls(repo)
 
     @classmethod
     def init_bare(cls, path):
-        repo = DRepo.init_bare(path)
+        repo = DulwichRepo.init_bare(path)
         return cls(repo)
 
     def get_client(self, origin_uri=None, **kwargs):
@@ -168,7 +172,7 @@ class Gittle(object):
         # Remove all previously existing data
         rmtree(self.path)
         os.makedirs(self.path)
-        self.repo = DRepo.init(self.path)
+        self.repo = DulwichRepo.init(self.path)
 
         # Fetch brand new copy from remote
         return self.pull_from(origin_uri, branch_name)
@@ -207,7 +211,7 @@ class Gittle(object):
             os.makedirs(local_path)
 
         # Initialize the local repository
-        local_repo = DRepo.init(local_path)
+        local_repo = DulwichRepo.init(local_path)
 
         repo = cls(local_repo, origin_uri=origin_uri, auth=auth)
 
@@ -256,8 +260,8 @@ class Gittle(object):
         self.push(origin_uri)
         return self.pull(origin_uri)
 
-    def lookup_entry(self, relpath):
-        if relpath not in self.trackable_files:
+    def lookup_entry(self, relpath, trackable_files=set()):
+        if not relpath in trackable_files:
             raise KeyError
 
         abspath = self.abspath(relpath)
@@ -272,7 +276,7 @@ class Gittle(object):
     @property
     @utils.transform(set)
     def tracked_files(self):
-        return self.index._byname.keys()
+        return list(self.index)
 
     @property
     @utils.transform(set)
@@ -285,7 +289,7 @@ class Gittle(object):
         return utils.subpaths(self.path, filters=self.filters)
 
     @property
-    @utils.memoize
+    #@utils.memoize
     @utils.transform(set)
     def trackable_files(self):
         return self.raw_files - self.ignored_files
@@ -316,8 +320,10 @@ class Gittle(object):
         tree_id = self.repo['HEAD'].tree
         names = self.trackable_files
 
+        lookup_func = partial(self.lookup_entry, trackable_files=names)
+
         # Format = [((old_name, new_name), (old_mode, new_mode), (old_sha, new_sha)), ...]
-        tree_diff = changes_from_tree(names, self.lookup_entry, obj_sto, tree_id, want_unchanged=False)
+        tree_diff = changes_from_tree(names, lookup_func, obj_sto, tree_id, want_unchanged=False)
         return list(tree_diff)
 
     @utils.transform(set)
@@ -427,6 +433,14 @@ class Gittle(object):
     def _parse_reference(self, ref_string):
         # COMMIT_REF~x
         if '~' in ref_string:
-            commit_ref, count = ref_string.split('~')
+            ref, count = ref_string.split('~')
+            commit = self.repo[ref]
             return self._get_commits_nth_parent(commit, count)
         return self.repo[ref_string]
+
+    def __hash__(self):
+        """
+        This is required otherwise the memoize function
+        will just mess it up
+        """
+        return hash(self.path)

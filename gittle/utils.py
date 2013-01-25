@@ -43,7 +43,6 @@ def list_from_args(args):
     if not same_type:
         raise Exception('Expected uniform arguments of same type !')
 
-
     # Flatten iterables
     # ['x', 'y'], ...
     if is_list:

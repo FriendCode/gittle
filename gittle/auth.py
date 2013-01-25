@@ -11,11 +11,23 @@ import os
 import paramiko
 
 # Local imports
-from gittle import utils
+from .gittle import utils
 
 
 # Exports
 __all__ = ('GittleAuth',)
+
+
+def get_pkey_file(pkey):
+    if isinstance(pkey, basestring):
+        if os.path.exists(pkey):
+            pkey_file = open(pkey)
+        else:
+            # Raw data
+            pkey_file = StringIO(pkey)
+    else:
+        return pkey
+    return pkey_file
 
 
 class GittleAuth(object):
@@ -30,19 +42,8 @@ class GittleAuth(object):
         self.password = password
         self.pkey = self.setup_pkey(pkey)
 
-    def get_pkey_file(self, pkey):
-        if isinstance(pkey, basestring):
-            if os.path.exists(pkey):
-                pkey_file = open(pkey)
-            else:
-                # Raw data
-                pkey_file = StringIO(pkey)
-        else:
-            return pkey
-        return pkey_file
-
     def setup_pkey(self, pkey):
-        pkey_file = self.get_pkey_file(pkey)
+        pkey_file = get_pkey_file(pkey)
         if not pkey_file:
             return None
         return paramiko.RSAKey.from_private_key(pkey_file)

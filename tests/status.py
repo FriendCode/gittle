@@ -14,7 +14,8 @@ def print_files(group_name, paths):
 
 #print_files('Changes not staged for commit', g.modified_unstaged_files)
 #print_files('Changes staged for commit', g.modified_staged_files)
-print_files('Ignored files', g.ignored_files)
+#print_files('Ignored files', g.ignored_files)
 print_files('Modified files', g.modified_files)
 print_files('Untracked Files', g.untracked_files)
 print_files('Tracked Files', g.tracked_files)
+print_files('Trackable Files', g.trackable_files)
