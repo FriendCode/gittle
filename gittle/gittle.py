@@ -380,6 +380,28 @@ class Gittle(object):
             if os.stat(self.abspath(f)).st_mtime > timestamp
         ]
 
+    @property
+    def pending_files(self):
+        """
+        Returns a list of all files that could be possibly staged
+        """
+        # Union of both
+        return self.modified_files | self.untracked_files
+
+    @property
+    def pending_files_by_state(self):
+        files = {
+            'modified': self.modified_files,
+            'untracked': self.untracked_files
+        }
+
+        # "Flip" the dictionary
+        return {
+            path: state
+            for state, paths in files.items()
+            for path in paths
+        }
+
     """
     @property
     @utils.transform(set)
