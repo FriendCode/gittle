@@ -86,6 +86,17 @@ class Gittle(object):
         return None
 
     @property
+    def has_commits(self):
+        """
+        If the repository has no HEAD we consider that is has no commits
+        """
+        try:
+            self.repo.head()
+        except KeyError:
+            return False
+        return True
+
+    @property
     def walker(self):
         """
         Very simple, basic walker
@@ -93,7 +104,9 @@ class Gittle(object):
         return self.repo.revision_history(self.repo.head())
 
     def commit_info(self):
-        return map(utils.commit_info, self.walker)
+        if self.has_commits:
+            return map(utils.commit_info, self.walker)
+        return []
 
     @property
     def git_dir(self):
