@@ -333,6 +333,8 @@ class Gittle(object):
     # Return a list of tuples
     # representing the changed elements in the git tree
     def _changed_entries(self):
+        if not self.has_commits:
+            return []
         obj_sto = self.repo.object_store
         tree_id = self.repo['HEAD'].tree
         names = self.trackable_files
