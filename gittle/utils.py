@@ -240,3 +240,32 @@ def first_true(iterable):
     if true_values:
         return true_values[0]
     return None
+
+
+def commit_name_email(commit_author):
+    try:
+        name, email = commit_author.rsplit(' ', 1)
+        # Extract the X from : "<X>"
+        email = email[1:-1]
+    except:
+        name = commit_author
+        email = ''
+    return name, email
+
+
+def commit_info(commit):
+    author_name, author_email = commit_name_email(commit.author)
+    committer_name, committer_email = commit_name_email(commit.committer)
+
+    return {
+        'author': commit.author,
+        'author_name': author_name,
+        'author_email': author_email,
+        'committer': commit.committer,
+        'committer_name': committer_name,
+        'committer_email': committer_email,
+        'sha': commit.sha().hexdigest(),
+        'time': commit.commit_time,
+        'timezone': commit.commit_timezone,
+        'message': commit.message,
+    }

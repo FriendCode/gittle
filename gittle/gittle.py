@@ -86,6 +86,16 @@ class Gittle(object):
         return None
 
     @property
+    def walker(self):
+        """
+        Very simple, basic walker
+        """
+        return self.repo.revision_history(self.repo.head())
+
+    def commit_info(self):
+        return map(utils.commit_info, self.walker)
+
+    @property
     def git_dir(self):
         return self.repo.controldir()
 
@@ -203,9 +213,8 @@ class Gittle(object):
         # Checkout modifications to working directory
         return self.checkout_all()
 
-
     @classmethod
-    def clone_remote(cls, origin_uri, local_path, auth=None, mkdir=True, **kwargs):
+    def clone(cls, origin_uri, local_path, auth=None, mkdir=True, **kwargs):
         """Clone a remote repository"""
         if mkdir and not(os.path.exists(local_path)):
             os.makedirs(local_path)
@@ -221,11 +230,6 @@ class Gittle(object):
         # TODO
 
         return repo
-
-    @classmethod
-    def clone(cls):
-        """Clone a local repository"""
-        pass
 
     def _commit(self, committer=None, author=None, message=None, *args, **kwargs):
         modified_files = self.modified_files
