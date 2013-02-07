@@ -4,12 +4,14 @@ from __future__ import absolute_import
 # Python imports
 import os
 import copy
+import logging
 from hashlib import sha1
 from shutil import rmtree
-from functools import partial
-import logging
+from functools import partial, wraps
+from StringIO import StringIO
 
 # Dulwich imports
+from dulwich import patch
 from dulwich.repo import Repo as DulwichRepo
 from dulwich.client import get_transport_and_path
 from dulwich.index import build_index_from_tree, changes_from_tree
@@ -24,7 +26,28 @@ from gittle.exceptions import InvalidRemoteUrl
 __all__ = ('Gittle',)
 
 
+# Useful decorators
+# A better way to do this in the future would maybe to use Mixins
+def working_only(method):
+    @wraps(method)
+    def f(self, *args, **kwargs):
+        if self.is_working:
+            return method(*args, **kwargs)
+        raise NotImplemented("%s can not be called on a bare repository")
+    return f
+
+
+def bare_only(method):
+    @wraps(method)
+    def f(self, *args, **kwargs):
+        if self.is_bare:
+            return method(*args, **kwargs)
+        raise NotImplemented("%s can not be called on a working repository")
+    return f
+
+
 class Gittle(object):
+    DEFAULT_COMMIT = 'HEAD'
     DEFAULT_BRANCH = 'master'
     DEFAULT_MESSAGE = '**No Message**'
     DEFAULT_USER_INFO = {
@@ -84,6 +107,21 @@ class Gittle(object):
         if name and email:
             return self._format_author(name, email)
         return None
+
+    @property
+    def is_bare(self):
+        """Bare repositories have no working directories or indexes
+        """
+        return self.repo.bare
+
+    @property
+    def is_working(self):
+        return not(self.is_bare)
+
+    def has_index(self):
+        """Opposite of is_bare
+        """
+        return self.repo.has_index()
 
     @property
     def has_commits(self):
@@ -227,13 +265,16 @@ class Gittle(object):
         return self.checkout_all()
 
     @classmethod
-    def clone(cls, origin_uri, local_path, auth=None, mkdir=True, **kwargs):
+    def clone(cls, origin_uri, local_path, auth=None, mkdir=True, bare=False, **kwargs):
         """Clone a remote repository"""
         if mkdir and not(os.path.exists(local_path)):
             os.makedirs(local_path)
 
         # Initialize the local repository
-        local_repo = DulwichRepo.init(local_path)
+        if bare:
+            local_repo = cls.init_bare(local_path)
+        else:
+            local_repo = cls.init(local_path)
 
         repo = cls(local_repo, origin_uri=origin_uri, auth=auth)
 
@@ -254,7 +295,8 @@ class Gittle(object):
         return self.repo.do_commit(
             message=message,
             author=author_msg,
-            committer=committer_msg)
+            committer=committer_msg,
+            encoding='UTF-8')
 
     # Like: git commmit -a
     def commit(self, name=None, email=None, message=None):
@@ -478,6 +520,29 @@ class Gittle(object):
             commit = self.repo[ref]
             return self._get_commits_nth_parent(commit, count)
         return self.repo[ref_string]
+
+    def _commit_tree(self, commit_sha):
+        """Return the tree object for a given commit
+        """
+        return self.repo[commit_sha].tree
+
+    def diff_between(self, old_commit_sha, new_commit_sha):
+        """Get the diff between two commits
+        """
+        old_tree = self._commit_tree(old_commit_sha)
+        new_tree = self._commit_tree(new_commit_sha)
+
+        output = StringIO()
+
+        # Write to output (our string)
+        patch.write_tree_diff(
+            output,
+            self.repo.object_store,
+            old_tree,
+            new_tree
+        )
+
+        return output.getvalue()
 
     def __hash__(self):
         """
