@@ -504,11 +504,26 @@ class Gittle(object):
         self.index.clear()
         return self.index.write()
 
+    def _to_commit(self, commit_obj):
+        """Allows methods to accept both SHA's or dulwich Commit objects as arguments
+        """
+        if isinstance(commit_obj, basestring):
+            return self.repo[commit_obj]
+        return commit_obj
+
+    def _commit_sha(self, commit_obj):
+        """Extracts a Dulwich commits SHA
+        """
+        if not isinstance(commit_obj, basestring):
+            return commit_obj.sha().hexdigest()
+        return commit_obj
+
     # Get the nth parent back for a given commit
     def _get_commits_nth_parent(self, commit, n):
+        commit = self._to_commit(commit)
         parents = commit.parents
         if n == 0 or not parents:
-            return commit
+            return self._commit_sha(commit)
         parent_sha = parents[0]
         parent = self.repo[parent_sha]
         return self._get_commits_nth_parent(parent, n - 1)
@@ -526,8 +541,15 @@ class Gittle(object):
         """
         return self.repo[commit_sha].tree
 
+    def diff(self, commit_sha, compare_to=None):
+        if not compare_to:
+            compare_to = self._get_commits_nth_parent(commit_sha, 1)
+        return self.diff_between(compare_to, commit_sha)
+
     def diff_between(self, old_commit_sha, new_commit_sha):
         """Get the diff between two commits
+
+            Get the modifications which occured between old_commit_sha and new_commit_sha
         """
         old_tree = self._commit_tree(old_commit_sha)
         new_tree = self._commit_tree(new_commit_sha)
