@@ -2,12 +2,12 @@ from gittle import Gittle
 
 repo = Gittle('.')
 
-lastest = reversed([
+lastest = [
     info['sha']
     for info in repo.commit_info()[1:3]
-])
+]
 
-print(repo.diff_between(*lastest))
+print(repo.diff(*lastest, diff_type='classic'))
 
 print("""
 

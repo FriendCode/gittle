@@ -4,6 +4,10 @@ import re
 import fnmatch
 import operator
 from functools import wraps
+from StringIO import StringIO
+
+# Dulwich imports
+from dulwich import patch
 
 # Constants
 LIST_TYPES = (list, tuple, set)
@@ -269,3 +273,38 @@ def commit_info(commit):
         'timezone': commit.commit_timezone,
         'message': commit.message,
     }
+
+
+def object_diff(*args, **kwargs):
+    """A more convenient wrapper around Dulwich's patching
+    """
+    fd = StringIO()
+    patch.write_object_diff(fd, *args, **kwargs)
+    return fd.getvalue()
+
+
+def dict_tree_diff(object_store, old_tree, new_tree):
+    """Returns a dictionary where the keys are the filenames and their respective
+    values are their diffs
+    """
+    changes = object_store.tree_changes(old_tree, new_tree)
+    return {
+        newpath: object_diff(object_store, (oldpath, oldmode, oldsha), (newpath, newmode, newsha))
+        for (oldpath, newpath), (oldmode, newmode), (oldsha, newsha) in changes
+    }
+
+
+def classic_tree_diff(object_store, old_tree, new_tree):
+    """Does a classic diff and returns the output in a buffer
+    """
+    output = StringIO()
+
+    # Write to output (our string)
+    patch.write_tree_diff(
+        output,
+        object_store,
+        old_tree,
+        new_tree
+    )
+
+    return output.getvalue()

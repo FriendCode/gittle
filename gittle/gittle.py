@@ -8,10 +8,8 @@ import logging
 from hashlib import sha1
 from shutil import rmtree
 from functools import partial, wraps
-from StringIO import StringIO
 
 # Dulwich imports
-from dulwich import patch
 from dulwich.repo import Repo as DulwichRepo
 from dulwich.client import get_transport_and_path
 from dulwich.index import build_index_from_tree, changes_from_tree
@@ -47,6 +45,8 @@ def bare_only(method):
 
 
 class Gittle(object):
+    """All paths used in Gittle external methods must be paths relative to the git repository
+    """
     DEFAULT_COMMIT = 'HEAD'
     DEFAULT_BRANCH = 'master'
     DEFAULT_MESSAGE = '**No Message**'
@@ -54,6 +54,12 @@ class Gittle(object):
         'name': None,
         'email': None,
     }
+
+    DIFF_FUNCTIONS = {
+        'classic': utils.classic_tree_diff,
+        'dict': utils.dict_tree_diff,
+    }
+    DEFAULT_DIFF_TYPE = 'dict'
 
     HIDDEN_REGEXES = [
         # Hide git directory
@@ -541,30 +547,24 @@ class Gittle(object):
         """
         return self.repo[commit_sha].tree
 
-    def diff(self, commit_sha, compare_to=None):
+    def diff(self, commit_sha, compare_to=None, diff_type=None):
+        diff_type = diff_type or self.DEFAULT_DIFF_TYPE
+        diff_func = self.DIFF_FUNCTIONS[diff_type]
+
         if not compare_to:
             compare_to = self._get_commits_nth_parent(commit_sha, 1)
-        return self.diff_between(compare_to, commit_sha)
 
-    def diff_between(self, old_commit_sha, new_commit_sha):
-        """Get the diff between two commits
+        return self._diff_between(compare_to, commit_sha, diff_function=diff_func)
 
-            Get the modifications which occured between old_commit_sha and new_commit_sha
+    def _diff_between(self, old_commit_sha, new_commit_sha, diff_function=None):
+        """Internal method for getting a diff between two commits
+            Please use .diff method unless you have very speciic needs
         """
+
         old_tree = self._commit_tree(old_commit_sha)
         new_tree = self._commit_tree(new_commit_sha)
 
-        output = StringIO()
-
-        # Write to output (our string)
-        patch.write_tree_diff(
-            output,
-            self.repo.object_store,
-            old_tree,
-            new_tree
-        )
-
-        return output.getvalue()
+        return diff_function(self.repo.object_store, old_tree, new_tree)
 
     def __hash__(self):
         """
