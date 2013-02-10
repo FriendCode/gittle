@@ -525,21 +525,29 @@ class Gittle(object):
         return commit_obj
 
     # Get the nth parent back for a given commit
-    def _get_commits_nth_parent(self, commit, n):
+    def get_parent_commit(self, commit, n=None):
+        """Recursively gets the nth parent for a given commit
+        """
+        n = n or 1
         commit = self._to_commit(commit)
         parents = commit.parents
-        if n == 0 or not parents:
+
+        if n <= 0 or not parents:
+            # Return a SHA
             return self._commit_sha(commit)
+
         parent_sha = parents[0]
         parent = self.repo[parent_sha]
-        return self._get_commits_nth_parent(parent, n - 1)
+
+        # Recur
+        return self.get_parent_commit(parent, n - 1)
 
     def _parse_reference(self, ref_string):
         # COMMIT_REF~x
         if '~' in ref_string:
             ref, count = ref_string.split('~')
             commit = self.repo[ref]
-            return self._get_commits_nth_parent(commit, count)
+            return self.get_parent_commit(commit, count)
         return self.repo[ref_string]
 
     def _commit_tree(self, commit_sha):
@@ -552,7 +560,7 @@ class Gittle(object):
         diff_func = self.DIFF_FUNCTIONS[diff_type]
 
         if not compare_to:
-            compare_to = self._get_commits_nth_parent(commit_sha, 1)
+            compare_to = self.get_parent_commit(commit_sha)
 
         return self._diff_between(compare_to, commit_sha, diff_function=diff_func)
 
