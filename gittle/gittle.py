@@ -75,6 +75,9 @@ class Gittle(object):
     PATTERN_REMOVED = (True, False)
     PATTERN_MODIFIED = (True, True)
 
+    # Permissions
+    MODE_DIRECTORY = 040000  # Used to tell if a tree entry is a directory
+
     def __init__(self, repo_or_path, origin_uri=None, auth=None, *args, **kwargs):
         if isinstance(repo_or_path, DulwichRepo):
             self.repo = repo_or_path
@@ -113,6 +116,12 @@ class Gittle(object):
         if name and email:
             return self._format_author(name, email)
         return None
+
+    @property
+    def head(self):
+        """Return SHA of the current HEAD
+        """
+        return self.repo.head()
 
     @property
     def is_bare(self):
@@ -291,8 +300,8 @@ class Gittle(object):
 
         return repo
 
-    def _commit(self, committer=None, author=None, message=None, *args, **kwargs):
-        modified_files = self.modified_files
+    def _commit(self, committer=None, author=None, message=None, files=None, *args, **kwargs):
+        modified_files = files or self.modified_files
         logging.warning("STAGING : %s" % modified_files)
         self.add(modified_files)
         message = message or self.DEFAULT_MESSAGE
@@ -305,7 +314,7 @@ class Gittle(object):
             encoding='UTF-8')
 
     # Like: git commmit -a
-    def commit(self, name=None, email=None, message=None):
+    def commit(self, name=None, email=None, message=None, files=None):
         user_info = {
             'name': name,
             'email': email,
@@ -313,11 +322,8 @@ class Gittle(object):
         return self._commit(
             committer=user_info,
             author=user_info,
-            message=message)
-
-    # Commit only a set of files
-    def commit_files(self, files, *args, **kwargs):
-        pass
+            message=message,
+            files=files)
 
     # Push all local commits
     # and pull all remote commits
@@ -524,6 +530,11 @@ class Gittle(object):
             return commit_obj.sha().hexdigest()
         return commit_obj
 
+    def _blob_data(self, sha):
+        """Return a blobs content for a given SHA
+        """
+        return self.repo[sha].data
+
     # Get the nth parent back for a given commit
     def get_parent_commit(self, commit, n=None):
         """Recursively gets the nth parent for a given commit
@@ -563,6 +574,41 @@ class Gittle(object):
             compare_to = self.get_parent_commit(commit_sha)
 
         return self._diff_between(compare_to, commit_sha, diff_function=diff_func)
+
+    def _commit_files(self, commit_sha, context=None, parent_path=None, is_tree=None):
+        """Returns a dict of the following Format :
+            {
+                "directory/filename.txt": {
+                    "sha": "xxxxxxxxxxxxxxxxxxxx",
+                    "data": "blablabla",
+                    "mode": 0xxxxx",
+                },
+                ...
+            }
+        """
+        # Default values
+        is_tree = is_tree or False
+        context = context or {}
+        parent_path = parent_path or ''
+
+        if is_tree:
+            tree = self.repo[commit_sha]
+        else:
+            tree = self.repo[self._commit_tree(commit_sha)]
+
+        for mode, path, sha in tree.entries():
+            # Check if entry is a directory
+            if mode == self.MODE_DIRECTORY:
+                self._commit_files(sha, context=context, parent_path=path, is_tree=True)
+            else:
+                subpath = os.path.join(parent_path, path)
+                context[subpath] = {
+                    'mode': mode,
+                    'sha': sha,
+                    'data': self._blob_data(sha),
+                }
+
+        return context
 
     def _diff_between(self, old_commit_sha, new_commit_sha, diff_function=None):
         """Internal method for getting a diff between two commits
