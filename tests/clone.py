@@ -13,5 +13,5 @@ kwargs = {
     'pkey': key,
 }
 
-repo = Gittle.clone_remote(repo_url, repo_path, **kwargs)
+repo = Gittle.clone(repo_url, repo_path, **kwargs)
 print(repo.tracked_files)

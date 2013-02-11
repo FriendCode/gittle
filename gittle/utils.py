@@ -308,3 +308,9 @@ def classic_tree_diff(object_store, old_tree, new_tree):
     )
 
     return output.getvalue()
+
+
+def prune_tree(tree, paths):
+    """Return a tree with only entries matching the list of paths supplied
+    """
+    raise NotImplemented()

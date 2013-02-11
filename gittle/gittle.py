@@ -29,18 +29,16 @@ __all__ = ('Gittle',)
 def working_only(method):
     @wraps(method)
     def f(self, *args, **kwargs):
-        if self.is_working:
-            return method(*args, **kwargs)
-        raise NotImplemented("%s can not be called on a bare repository")
+        assert self.is_working, "%s can not be called on a bare repository" % method.func_name
+        return method(self, *args, **kwargs)
     return f
 
 
 def bare_only(method):
     @wraps(method)
     def f(self, *args, **kwargs):
-        if self.is_bare:
-            return method(*args, **kwargs)
-        raise NotImplemented("%s can not be called on a working repository")
+        assert self.is_bare, "%s can not be called on a working repository" % method.func_name
+        return method(self, *args, **kwargs)
     return f
 
 
@@ -81,10 +79,13 @@ class Gittle(object):
     def __init__(self, repo_or_path, origin_uri=None, auth=None, *args, **kwargs):
         if isinstance(repo_or_path, DulwichRepo):
             self.repo = repo_or_path
+        elif isinstance(repo_or_path, Gittle):
+            self.repo = DulwichRepo(repo_or_path.path)
         elif isinstance(repo_or_path, basestring):
             path = os.path.abspath(repo_or_path)
             self.repo = DulwichRepo(path)
         else:
+            logging.warning('Repo is of type %s' % type(repo_or_path))
             raise Exception('Gittle must be initialized with either a dulwich repository or a string to the path')
 
         # Set path
@@ -269,15 +270,18 @@ class Gittle(object):
 
         return remote_refs
 
-    def fetch(self, origin_uri=None):
+    def fetch(self, origin_uri=None, bare=None):
+        bare = bare or False
+
         # Remote refs
         remote_refs = self.fetch_remote(origin_uri)
 
         # Update head
         self.repo["HEAD"] = remote_refs["HEAD"]
 
-        # Checkout modifications to working directory
-        return self.checkout_all()
+        # Checkout working directories
+        if not bare:
+            self.checkout_all()
 
     @classmethod
     def clone(cls, origin_uri, local_path, auth=None, mkdir=True, bare=False, **kwargs):
@@ -293,12 +297,22 @@ class Gittle(object):
 
         repo = cls(local_repo, origin_uri=origin_uri, auth=auth)
 
-        repo.fetch()
+        repo.fetch(bare=bare)
 
         # Add origin
         # TODO
 
         return repo
+
+    @classmethod
+    def clone_bare(cls, *args, **kwargs):
+        """Same as .clone except clones to a bare repository by default
+        """
+        kwargs.setdefault('bare', True)
+        return cls.clone(*args, **kwargs)
+
+    # Alias to clone_bare
+    fork = clone_bare
 
     def _commit(self, committer=None, author=None, message=None, files=None, *args, **kwargs):
         modified_files = files or self.modified_files
@@ -499,14 +513,28 @@ class Gittle(object):
         self.add(old_files)
         return
 
-    def checkout_all(self):
-        # Rebuild index
-        return build_index_from_tree(self.repo.path, self.repo.index_path(),
-                        self.repo.object_store, self.repo['HEAD'].tree)
+    @working_only
+    def _checkout_tree(self, tree):
+        return build_index_from_tree(
+            self.repo.path,
+            self.repo.index_path(),
+            self.repo.object_store,
+            tree
+        )
 
-    @utils.arglist_method
-    def checkout(self, files):
-        pass
+    def checkout_all(self, commit_sha=None):
+        commit_sha = commit_sha or self.head
+        commit_tree = self._commit_tree(commit_sha)
+        # Rebuild index from the current tree
+        return self._checkout_tree(commit_tree)
+
+    def checkout(self, commit_sha=None, files=None):
+        """Checkout only a select amount of files
+        """
+        commit_sha = commit_sha or self.head
+        files = files or []
+
+        return self
 
     @utils.arglist_method
     def reset(self, files, commit='HEAD'):
