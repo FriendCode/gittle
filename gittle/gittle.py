@@ -13,6 +13,7 @@ from functools import partial, wraps
 from dulwich.repo import Repo as DulwichRepo
 from dulwich.client import get_transport_and_path
 from dulwich.index import build_index_from_tree, changes_from_tree
+from dulwich.objects import Tree
 
 # Local imports
 from gittle import utils
@@ -643,7 +644,13 @@ class Gittle(object):
             Please use .diff method unless you have very speciic needs
         """
 
-        old_tree = self._commit_tree(old_commit_sha)
+        # If commit is first commit (new_commit_sha == old_commit_sha)
+        # then compare to an empty tree
+        if new_commit_sha == old_commit_sha:
+            old_tree = Tree()
+        else:
+            old_tree = self._commit_tree(old_commit_sha)
+
         new_tree = self._commit_tree(new_commit_sha)
 
         return diff_function(self.repo.object_store, old_tree, new_tree)
