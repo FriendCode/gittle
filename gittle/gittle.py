@@ -159,9 +159,16 @@ class Gittle(object):
         return self.repo.revision_history(self.repo.head())
 
     def commit_info(self):
+        """Return a generator of commits with all their attached information
+        """
         if self.has_commits:
-            return map(utils.commit_info, self.walker)
+            return [utils.commit_info(entry) for entry in self.walker]
         return []
+
+    def commits(self):
+        """Return a list of SHAs for all the concerned commits
+        """
+        return [commit['sha'] for commit in self.commit_info]
 
     @property
     def git_dir(self):
