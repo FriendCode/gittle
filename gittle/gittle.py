@@ -168,7 +168,7 @@ class Gittle(object):
     def commits(self):
         """Return a list of SHAs for all the concerned commits
         """
-        return [commit['sha'] for commit in self.commit_info]
+        return [commit['sha'] for commit in self.commit_info()]
 
     @property
     def git_dir(self):
