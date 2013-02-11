@@ -165,6 +165,10 @@ class Gittle(object):
             return [utils.commit_info(entry) for entry in self.walker]
         return []
 
+    @property
+    def commit_count(self):
+        return len(self.walker)
+
     def commits(self):
         """Return a list of SHAs for all the concerned commits
         """
@@ -611,7 +615,7 @@ class Gittle(object):
 
         return self._diff_between(compare_to, commit_sha, diff_function=diff_func)
 
-    def _commit_files(self, commit_sha, context=None, parent_path=None, is_tree=None):
+    def get_commit_files(self, commit_sha, parent_path=None, is_tree=None, paths=None):
         """Returns a dict of the following Format :
             {
                 "directory/filename.txt": {
@@ -623,8 +627,8 @@ class Gittle(object):
             }
         """
         # Default values
+        context = {}
         is_tree = is_tree or False
-        context = context or {}
         parent_path = parent_path or ''
 
         if is_tree:
@@ -635,16 +639,46 @@ class Gittle(object):
         for mode, path, sha in tree.entries():
             # Check if entry is a directory
             if mode == self.MODE_DIRECTORY:
-                self._commit_files(sha, context=context, parent_path=path, is_tree=True)
+                context.update(
+                    self.get_commit_files(sha, parent_path=path, is_tree=True, paths=paths)
+                )
             else:
                 subpath = os.path.join(parent_path, path)
-                context[subpath] = {
-                    'mode': mode,
-                    'sha': sha,
-                    'data': self._blob_data(sha),
-                }
-
+                # Only add the files we want
+                if paths is None or subpath in paths:
+                    context[subpath] = {
+                        'mode': mode,
+                        'sha': sha,
+                        'data': self._blob_data(sha),
+                    }
         return context
+
+    def file_versions(self, path):
+        """Returns all commits where given file was modified
+        """
+        versions = []
+        commits_info = self.commit_info()
+        seen_shas = set()
+
+        for commit in commits_info:
+            try:
+                files = self.get_commit_files(commit['sha'], paths=[path])
+                file_path, file_data = files.items()[0]
+            except IndexError:
+                continue
+
+            file_sha = file_data['sha']
+
+            if file_sha in seen_shas:
+                continue
+            else:
+                seen_shas.add(file_sha)
+
+            # Add file info
+            file_data['path'] = file_path
+            commit['file'] = file_data
+            versions.append(file_data)
+        return versions
 
     def _diff_between(self, old_commit_sha, new_commit_sha, diff_function=None):
         """Internal method for getting a diff between two commits
