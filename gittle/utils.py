@@ -18,6 +18,10 @@ def first(iterable):
     return iterable[0]
 
 
+def rest(iterable):
+    return iterable[1:]
+
+
 def last(iterable):
     return iterable[-1]
 
@@ -262,6 +266,16 @@ def commit_info(commit):
     author_name, author_email = commit_name_email(commit.author)
     committer_name, committer_email = commit_name_email(commit.committer)
 
+    message_lines = commit.message.splitlines()
+    summary = first(message_lines)
+    description = '\n'.join(
+        true_only(
+            rest(
+                message_lines
+            )
+        )
+    )
+
     return {
         'author': commit.author,
         'author_name': author_name,
@@ -273,6 +287,8 @@ def commit_info(commit):
         'time': commit.commit_time,
         'timezone': commit.commit_timezone,
         'message': commit.message,
+        'summary': summary,
+        'description': description,
     }
 
 
