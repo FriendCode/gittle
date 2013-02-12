@@ -32,9 +32,12 @@ class SubFileSystemBackend(FileSystemBackend):
         return os.path.join(self.root_path, path)
 
     def open_repository(self, path):
+        stripped_path = path.strip('/')
+        full_path = self.rewrite_path(stripped_path)
+
         print('opening %s' % path)
-        full_path = self.rewrite_path(path)
         print('full path = %s' % full_path)
+
         return super(SubFileSystemBackend, self).open_repository(full_path)
 
 
@@ -48,7 +51,7 @@ class GitServer(TCPGitServer):
         self.listen_addr = listen_addr or 'localhost'
 
         # Backend
-        backend = SubFileSystemBackend(root_path)
+        backend = SubFileSystemBackend(self.root_path)
 
         # Handlers by permissions
         handlers = PERM_MAPPING.get(self.perm, READ_HANDLERS)
