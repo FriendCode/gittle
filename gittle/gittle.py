@@ -158,11 +158,14 @@ class Gittle(object):
         """
         return self.repo.revision_history(self.repo.head())
 
-    def commit_info(self):
+    def commit_info(self, p=0, n=None):
         """Return a generator of commits with all their attached information
         """
         if self.has_commits:
-            return [utils.commit_info(entry) for entry in self.walker]
+            commits = [utils.commit_info(entry) for entry in self.walker]
+            if not n:
+                return commits
+            return commits[n*p:n*(p+1)]
         return []
 
     @property
@@ -322,9 +325,6 @@ class Gittle(object):
         """
         kwargs.setdefault('bare', True)
         return cls.clone(*args, **kwargs)
-
-    # Alias to clone_bare
-    fork = clone_bare
 
     def _commit(self, committer=None, author=None, message=None, files=None, *args, **kwargs):
         modified_files = files or self.modified_files
@@ -702,3 +702,7 @@ class Gittle(object):
         will just mess it up
         """
         return hash(self.path)
+
+    # Alias to clone_bare
+    fork = clone_bare
+    log = commit_info
