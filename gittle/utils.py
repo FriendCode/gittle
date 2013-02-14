@@ -303,11 +303,15 @@ def object_diff(*args, **kwargs):
     return fd.getvalue()
 
 
+def changes_tree_diff(object_store, old_tree, new_tree):
+    return object_store.tree_changes(old_tree, new_tree)
+
+
 def dict_tree_diff(object_store, old_tree, new_tree):
     """Returns a dictionary where the keys are the filenames and their respective
     values are their diffs
     """
-    changes = object_store.tree_changes(old_tree, new_tree)
+    changes = changes_tree_diff(object_store, old_tree, new_tree)
     return {
         newpath: object_diff(object_store, (oldpath, oldmode, oldsha), (newpath, newmode, newsha))
         for (oldpath, newpath), (oldmode, newmode), (oldsha, newsha) in changes

@@ -57,6 +57,7 @@ class Gittle(object):
     DIFF_FUNCTIONS = {
         'classic': utils.classic_tree_diff,
         'dict': utils.dict_tree_diff,
+        'changes': utils.dict_tree_diff
     }
     DEFAULT_DIFF_TYPE = 'dict'
 
@@ -696,6 +697,22 @@ class Gittle(object):
 
         return diff_function(self.repo.object_store, old_tree, new_tree)
 
+    def changes(self, *args, **kwargs):
+        """ List of changes between two SHAs
+            Returns a list of lists of tuples :
+            [
+                [
+                    (oldpath, newpath), (oldmode, newmode), (oldsha, newsha)
+                ],
+                ...
+            ]
+        """
+        kwargs['diff_type'] = 'changes'
+        return self.diff(*args, **kwargs)
+
+    def changes_count(self, *args, **kwargs):
+        return len(self.changes(*args, **kwargs))
+
     def __hash__(self):
         """
         This is required otherwise the memoize function
@@ -706,3 +723,4 @@ class Gittle(object):
     # Alias to clone_bare
     fork = clone_bare
     log = commit_info
+    diff_count = changes_count
