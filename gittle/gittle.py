@@ -158,7 +158,7 @@ class Gittle(object):
         """
         return self.repo.revision_history(self.repo.head())
 
-    def commit_info(self, start=0, n=end):
+    def commit_info(self, start=0, end=None):
         """Return a generator of commits with all their attached information
         """
         if self.has_commits:
