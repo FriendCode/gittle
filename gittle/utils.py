@@ -14,7 +14,10 @@ from dulwich import patch
 LIST_TYPES = (list, tuple, set)
 
 
-def first(iterable):
+def first(iterable, default=None):
+    if not iterable:
+        # Empty iterator (list)
+        return default
     return iterable[0]
 
 
@@ -267,7 +270,7 @@ def commit_info(commit):
     committer_name, committer_email = commit_name_email(commit.committer)
 
     message_lines = commit.message.splitlines()
-    summary = first(message_lines)
+    summary = first(message_lines, '')
     description = '\n'.join(
         true_only(
             rest(
