@@ -293,7 +293,8 @@ class Gittle(object):
         remote_refs = self.fetch_remote(origin_uri)
 
         # Update head
-        self["HEAD"] = remote_refs["HEAD"]
+        # Hit repo because head doesn't yet exist so
+        self.repo['HEAD'] = remote_refs['HEAD']
 
         # Checkout working directories
         if not bare:
