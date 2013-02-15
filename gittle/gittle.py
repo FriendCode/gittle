@@ -724,6 +724,44 @@ class Gittle(object):
     def changes_count(self, *args, **kwargs):
         return len(self.changes(*args, **kwargs))
 
+    def _refs_by_pattern(self, pattern):
+        refs = self.refs
+
+        def item_filter(key_value):
+            """Filter only concered refs"""
+            key, value = key_value
+            return key.startswith(pattern)
+
+        def item_map(key_value):
+            """Rewrite keys"""
+            key, value = key_value
+            new_key = key.lstrip(pattern)
+            return (new_key, value)
+
+        return dict(
+            map(item_map,
+                filter(item_filter,
+                    refs.items()
+                )
+            )
+        )
+
+    @property
+    def refs(self):
+        return self.repo.get_refs()
+
+    @property
+    def branches(self):
+        return self._refs_by_pattern('refs/heads/')
+
+    @property
+    def remote_branches(self):
+        return self._refs_by_pattern('refs/remotes/')
+
+    @property
+    def tags(self):
+        return self._refs_by_pattern('refs/tags/')
+
     def __hash__(self):
         """
         This is required otherwise the memoize function
