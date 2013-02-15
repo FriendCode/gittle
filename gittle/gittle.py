@@ -217,7 +217,7 @@ class Gittle(object):
 
     @property
     def last_commit(self):
-        return self.repo[self.repo.head()]
+        return self[self.repo.head()]
 
     @property
     def index(self):
@@ -293,7 +293,7 @@ class Gittle(object):
         remote_refs = self.fetch_remote(origin_uri)
 
         # Update head
-        self.repo["HEAD"] = remote_refs["HEAD"]
+        self["HEAD"] = remote_refs["HEAD"]
 
         # Checkout working directories
         if not bare:
@@ -417,7 +417,7 @@ class Gittle(object):
         if not self.has_commits:
             return []
         obj_sto = self.repo.object_store
-        tree_id = self.repo['HEAD'].tree
+        tree_id = self['HEAD'].tree
         names = self.trackable_files
 
         lookup_func = partial(self.lookup_entry, trackable_files=names)
@@ -561,24 +561,28 @@ class Gittle(object):
         """Allows methods to accept both SHA's or dulwich Commit objects as arguments
         """
         if isinstance(commit_obj, basestring):
-            return self.repo[commit_obj]
+            return self[commit_obj]
         return commit_obj
 
     def _commit_sha(self, commit_obj):
         """Extracts a Dulwich commits SHA
         """
-        if not isinstance(commit_obj, basestring):
-            return commit_obj.sha().hexdigest()
-        return commit_obj
+        if utils.is_sha(commit_obj):
+            return commit_obj
+        elif isinstance(commit_obj, basestring):
+            # Can't use self[commit_obj] to avoid infinite recursion
+            commit_obj = self.repo[commit_obj]
+        return commit_obj.sha().hexdigest()
 
     def _blob_data(self, sha):
         """Return a blobs content for a given SHA
         """
-        return self.repo[sha].data
+        return self[sha].data
 
     # Get the nth parent back for a given commit
     def get_parent_commit(self, commit, n=None):
-        """Recursively gets the nth parent for a given commit
+        """ Recursively gets the nth parent for a given commit
+            Warning: Remember that parents aren't the previous commits
         """
         n = n or 1
         commit = self._to_commit(commit)
@@ -589,30 +593,37 @@ class Gittle(object):
             return self._commit_sha(commit)
 
         parent_sha = parents[0]
-        parent = self.repo[parent_sha]
+        parent = self[parent_sha]
 
         # Recur
         return self.get_parent_commit(parent, n - 1)
+
+    def get_previous_commit(self, commit_ref, n=None):
+        commit_sha = self._parse_reference(commit_ref)
+        n = n or 1
+        commits = self.commits()
+        return utils.next(commits, commit_sha, n=n, default=commit_sha)
 
     def _parse_reference(self, ref_string):
         # COMMIT_REF~x
         if '~' in ref_string:
             ref, count = ref_string.split('~')
-            commit = self.repo[ref]
-            return self.get_parent_commit(commit, count)
-        return self.repo[ref_string]
+            count = int(count)
+            commit_sha = self._commit_sha(ref)
+            return self.get_previous_commit(commit_sha, count)
+        return self._commit_sha(ref_string)
 
     def _commit_tree(self, commit_sha):
         """Return the tree object for a given commit
         """
-        return self.repo[commit_sha].tree
+        return self[commit_sha].tree
 
     def diff(self, commit_sha, compare_to=None, diff_type=None):
         diff_type = diff_type or self.DEFAULT_DIFF_TYPE
         diff_func = self.DIFF_FUNCTIONS[diff_type]
 
         if not compare_to:
-            compare_to = self.get_parent_commit(commit_sha)
+            compare_to = self.get_previous_commit(commit_sha)
 
         return self._diff_between(compare_to, commit_sha, diff_function=diff_func)
 
@@ -633,9 +644,9 @@ class Gittle(object):
         parent_path = parent_path or ''
 
         if is_tree:
-            tree = self.repo[commit_sha]
+            tree = self[commit_sha]
         else:
-            tree = self.repo[self._commit_tree(commit_sha)]
+            tree = self[self._commit_tree(commit_sha)]
 
         for mode, path, sha in tree.entries():
             # Check if entry is a directory
@@ -719,6 +730,14 @@ class Gittle(object):
         will just mess it up
         """
         return hash(self.path)
+
+    def __getitem__(self, key):
+        sha = self._parse_reference(key)
+        return self.repo[sha]
+
+    def __setitem__(self, key, value):
+        sha = self._parse_reference(key)
+        self.repo[sha] = value
 
     # Alias to clone_bare
     fork = clone_bare

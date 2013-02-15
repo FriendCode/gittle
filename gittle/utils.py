@@ -29,6 +29,25 @@ def last(iterable):
     return iterable[-1]
 
 
+def get(iterable, index, default=None):
+    try:
+        return iterable[index]
+    except IndexError:
+        return default
+
+
+def next(iterable, value, n=1, default=None):
+    if value in iterable:
+        index = iterable.index(value)
+        return get(iterable, index + n, default=default)
+    return default
+
+
+def prev(*args, **kwargs):
+    kwargs['n'] = kwargs.get('n', 1) * -1
+    return next(*args, **kwargs)
+
+
 def list_from_args(args):
     """
     Flatten list of args
@@ -405,3 +424,7 @@ def parse_url(url, defaults=None):
         'protocol': protocol,
         'path': path,
     }
+
+
+def is_sha(sha):
+    return isinstance(sha, basestring) and len(sha) == 40
