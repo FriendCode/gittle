@@ -48,6 +48,15 @@ def prev(*args, **kwargs):
     return next(*args, **kwargs)
 
 
+def chainable(method):
+    @wraps(method)
+    def f(self, *args, **kwargs):
+        f(self, *args, **kwargs)
+        return self
+    f.is_chainable = True
+    return f
+
+
 def list_from_args(args):
     """
     Flatten list of args
