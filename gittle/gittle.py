@@ -736,7 +736,7 @@ class Gittle(object):
         def item_map(key_value):
             """Rewrite keys"""
             key, value = key_value
-            new_key = key.lstrip(pattern)
+            new_key = key[len(pattern):]
             return (new_key, value)
 
         return dict(
