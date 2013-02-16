@@ -48,6 +48,7 @@ class Gittle(object):
     """
     DEFAULT_COMMIT = 'HEAD'
     DEFAULT_BRANCH = 'master'
+    DEFAULT_REMOTE = 'origin'
     DEFAULT_MESSAGE = '**No Message**'
     DEFAULT_USER_INFO = {
         'name': None,
@@ -763,6 +764,24 @@ class Gittle(object):
     def tags(self):
         return self._refs_by_pattern('refs/tags/')
 
+    @property
+    def remotes(self):
+        """ Dict of remotes
+            Example :
+            {
+                'origin': 'http://friendco.de/some_user/repo.git'
+            }
+        """
+        config = self.repo.get_config()
+        return {
+            keys[1]: values['url']
+            for keys, values in config.items()
+            if keys[0] == 'remote'
+        }
+
+    def switch_branch(self, track_remote=None):
+        pass
+
     def __hash__(self):
         """
         This is required otherwise the memoize function
@@ -775,7 +794,6 @@ class Gittle(object):
         return self.repo[sha]
 
     def __setitem__(self, key, value):
-        sha = self._parse_reference(key)
         self.repo[sha] = value
 
     # Alias to clone_bare
