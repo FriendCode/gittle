@@ -15,10 +15,13 @@ from dulwich.client import get_transport_and_path
 from dulwich.index import build_index_from_tree, changes_from_tree
 from dulwich.objects import Tree
 
+# Funky imports
+import funky
+
 # Local imports
-from gittle import utils
 from gittle.auth import GittleAuth
 from gittle.exceptions import InvalidRemoteUrl
+from gittle import utils
 
 
 # Exports
@@ -56,9 +59,9 @@ class Gittle(object):
     }
 
     DIFF_FUNCTIONS = {
-        'classic': utils.classic_tree_diff,
-        'dict': utils.dict_tree_diff,
-        'changes': utils.dict_tree_diff
+        'classic': utils.git.classic_tree_diff,
+        'dict': utils.git.dict_tree_diff,
+        'changes': utils.git.dict_tree_diff
     }
     DEFAULT_DIFF_TYPE = 'dict'
 
@@ -100,7 +103,7 @@ class Gittle(object):
         # Build ignore filter
         self.hidden_regexes = copy.copy(self.HIDDEN_REGEXES)
         self.hidden_regexes.extend(self._get_ignore_regexes())
-        self.ignore_filter = utils.path_filter_regex(self.hidden_regexes)
+        self.ignore_filter = utils.paths.path_filter_regex(self.hidden_regexes)
         self.filters = [
             self.ignore_filter,
         ]
@@ -164,7 +167,7 @@ class Gittle(object):
         """Return a generator of commits with all their attached information
         """
         if self.has_commits:
-            commits = [utils.commit_info(entry) for entry in self.walker]
+            commits = [utils.git.commit_info(entry) for entry in self.walker]
             if not end:
                 return commits
             return commits[start:end]
@@ -204,7 +207,7 @@ class Gittle(object):
             return []
         lines = open(gitignore_filename).readlines()
         globers = map(lambda line: line.rstrip(), lines)
-        return utils.globers_to_regex(globers)
+        return utils.paths.globers_to_regex(globers)
 
     # Get the absolute path for a file in the git repo
     def abspath(self, repo_file):
@@ -374,34 +377,34 @@ class Gittle(object):
         return (s.hexdigest(), os.stat(abspath).st_mode)
 
     @property
-    @utils.transform(set)
+    @funky.transform(set)
     def tracked_files(self):
         return list(self.index)
 
     @property
-    @utils.transform(set)
+    @funky.transform(set)
     def raw_files(self):
-        return utils.subpaths(self.path)
+        return utils.paths.subpaths(self.path)
 
     @property
-    @utils.transform(set)
+    @funky.transform(set)
     def ignored_files(self):
-        return utils.subpaths(self.path, filters=self.filters)
+        return utils.paths.subpaths(self.path, filters=self.filters)
 
     @property
     #@utils.memoize
-    @utils.transform(set)
+    @funky.transform(set)
     def trackable_files(self):
         return self.raw_files - self.ignored_files
 
     @property
-    @utils.transform(set)
+    @funky.transform(set)
     def untracked_files(self):
         return self.trackable_files - self.tracked_files
 
     """
     @property
-    @utils.transform(set)
+    @funky.transform(set)
     def modified_staged_files(self):
         "Checks if the file has changed since last commit"
         timestamp = self.last_commit.commit_time
@@ -428,35 +431,35 @@ class Gittle(object):
         tree_diff = changes_from_tree(names, lookup_func, obj_sto, tree_id, want_unchanged=False)
         return list(tree_diff)
 
-    @utils.transform(set)
+    @funky.transform(set)
     def _changed_entries_by_pattern(self, pattern):
         changed_entries = self._changed_entries()
         filtered_paths = [
-            utils.first_true(names)
+            funky.first_true(names)
             for names, modes, sha in changed_entries
-            if tuple(map(bool, names)) == pattern and utils.first_true(names)
+            if tuple(map(bool, names)) == pattern and funky.first_true(names)
         ]
 
         return filtered_paths
 
     @property
-    @utils.transform(set)
+    @funky.transform(set)
     def removed_files(self):
         return self._changed_entries_by_pattern(self.PATTERN_REMOVED) - self.ignored_files
 
     @property
-    @utils.transform(set)
+    @funky.transform(set)
     def added_files(self):
         return self._changed_entries_by_pattern(self.PATTERN_ADDED) - self.ignored_files
 
     @property
-    @utils.transform(set)
+    @funky.transform(set)
     def modified_files(self):
         modified_files = self._changed_entries_by_pattern(self.PATTERN_MODIFIED) - self.ignored_files
         return modified_files
 
     @property
-    @utils.transform(set)
+    @funky.transform(set)
     def modified_unstaged_files(self):
         timestamp = self.last_commit.commit_time
         return [
@@ -489,13 +492,13 @@ class Gittle(object):
 
     """
     @property
-    @utils.transform(set)
+    @funky.transform(set)
     def modified_files(self):
         return self.modified_staged_files | self.modified_unstaged_files
     """
 
     # Like: git add
-    @utils.arglist_method
+    @funky.arglist_method
     def stage(self, files):
         return self.repo.stage(files)
 
@@ -503,7 +506,7 @@ class Gittle(object):
         return self.stage(*args, **kwargs)
 
     # Like: git rm
-    @utils.arglist_method
+    @funky.arglist_method
     def rm(self, files, force=False):
         index = self.index
         index_files = filter(lambda f: f in index, files)
@@ -516,13 +519,13 @@ class Gittle(object):
         os.rename(old_name, new_name)
 
     # Like: git mv
-    @utils.arglist_method
+    @funky.arglist_method
     def mv(self, files_pair):
         index = self.index
         files_in_index = filter(lambda f: f[0] in index, files_pair)
         map(self.mv_fs, files_in_index)
-        old_files = map(utils.first, files_in_index)
-        new_files = map(utils.last, files_in_index)
+        old_files = map(funky.first, files_in_index)
+        new_files = map(funky.last, files_in_index)
         self.add(new_files)
         self.rm(old_files)
         self.add(old_files)
@@ -551,7 +554,7 @@ class Gittle(object):
 
         return self
 
-    @utils.arglist_method
+    @funky.arglist_method
     def reset(self, files, commit='HEAD'):
         pass
 
@@ -569,7 +572,7 @@ class Gittle(object):
     def _commit_sha(self, commit_obj):
         """Extracts a Dulwich commits SHA
         """
-        if utils.is_sha(commit_obj):
+        if utils.git.is_sha(commit_obj):
             return commit_obj
         elif isinstance(commit_obj, basestring):
             # Can't use self[commit_obj] to avoid infinite recursion
@@ -604,7 +607,7 @@ class Gittle(object):
         commit_sha = self._parse_reference(commit_ref)
         n = n or 1
         commits = self.commits()
-        return utils.next(commits, commit_sha, n=n, default=commit_sha)
+        return funky.next(commits, commit_sha, n=n, default=commit_sha)
 
     def _parse_reference(self, ref_string):
         # COMMIT_REF~x

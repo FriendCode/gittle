@@ -26,6 +26,6 @@ setup(name='gittle',
       It's pure python (no dependancy on the git binary) and has no other dependancies besides
       the python stdlib, dulwich and paramiko (optional).
       """,
-      packages=['gittle'],
+      packages=['gittle', 'gittle.utils'],
       **setup_kwargs
 )

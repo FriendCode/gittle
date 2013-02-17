@@ -10,8 +10,8 @@ import os
 # Paramiko imports
 import paramiko
 
-# Local imports
-from .gittle import utils
+# Funky imports
+from funky import negate
 
 
 # Exports
@@ -53,7 +53,7 @@ class GittleAuth(object):
         return self.username and self.password
 
     @property
-    @utils.negate
+    @negate
     def can_pkey(self):
         return self.pkey is None
 
