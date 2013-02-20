@@ -7,6 +7,7 @@ It builds upon dulwich which provides most of the low-level machinery
 
 ## Local
 - [X] Common git operations (add, rm, mv, commit, log)
+- [X] Branch operations (creating, switching, deleting)
 
 ## Remote
 - [X] Fetching
@@ -15,9 +16,12 @@ It builds upon dulwich which provides most of the low-level machinery
 
 ## Merging
 - [] Fast forward
+- [] Recursive
+- [] Merge branches
 
 ## Testing
-(everything)
+- [] Unit tests
 
 ## Refactoring
-(some parts)
+- [] Use OO more Internaly
+- [] Perfect exposed API

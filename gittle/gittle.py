@@ -70,6 +70,11 @@ class Gittle(object):
         r'.*\/\.git\/.*',
     ]
 
+    # References
+    REFS_BRANCHES = 'refs/heads/'
+    REFS_REMOTES = 'refs/remotes/'
+    REFS_TAGS = 'refs/tags/'
+
     # Name pattern truths
     # Used for detecting if files are :
     # - deleted
@@ -123,6 +128,18 @@ class Gittle(object):
         if name and email:
             return self._format_author(name, email)
         return None
+
+    def _format_ref(self, base, extra):
+        return ''.join([base, extra])
+
+    def _format_ref_branch(self, branch_name):
+        return self._format_ref(self.REFS_BRANCHES, branch_name)
+
+    def _format_ref_remote(self, remote_name):
+        return self._format_ref(self.REFS_REMOTES, remote_name)
+
+    def _format_ref_tag(self, tag_name):
+        return self._format_ref(self.REFS_TAGS, tag_name)
 
     @property
     def head(self):
@@ -566,7 +583,7 @@ class Gittle(object):
         """Allows methods to accept both SHA's or dulwich Commit objects as arguments
         """
         if isinstance(commit_obj, basestring):
-            return self[commit_obj]
+            return self.repo[commit_obj]
         return commit_obj
 
     def _commit_sha(self, commit_obj):
@@ -589,7 +606,8 @@ class Gittle(object):
         """ Recursively gets the nth parent for a given commit
             Warning: Remember that parents aren't the previous commits
         """
-        n = n or 1
+        if n is None:
+            n = 1
         commit = self._to_commit(commit)
         parents = commit.parents
 
@@ -757,7 +775,7 @@ class Gittle(object):
 
     @property
     def branches(self):
-        return self._refs_by_pattern('refs/heads/')
+        return self._refs_by_pattern()
 
     @property
     def remote_branches(self):
@@ -770,10 +788,10 @@ class Gittle(object):
     @property
     def remotes(self):
         """ Dict of remotes
-            Example :
-            {
-                'origin': 'http://friendco.de/some_user/repo.git'
-            }
+        {
+            'origin': 'http://friendco.de/some_user/repo.git',
+            ...
+        }
         """
         config = self.repo.get_config()
         return {
@@ -782,13 +800,31 @@ class Gittle(object):
             if keys[0] == 'remote'
         }
 
-    def switch_branch(self, track_remote=None):
+    def create_branch(self, base_branch, new_branch, tracking=None):
+        base_ref = self._format_ref_branch(base_branch)
+        new_ref = self._format_ref_branch(new_branch)
+
+        self.repo.refs[new_ref] = self.repo.refs[base_ref]
+
+    def switch_branch(self, branch_name, track_remote=None):
+        """Changes the current branch
+        """
+        branch_ref = self._format_ref_branch(branch_name)
+
+        # Change main branch
+        self.repo.refs.set_symbolic_ref('HEAD', branch_ref)
+
+        if self.is_working:
+            self.checkout_all()
+
+    def _is_fast_forward(self):
+        pass
+
+    def _merge_fast_forward(self):
         pass
 
     def __hash__(self):
-        """
-        This is required otherwise the memoize function
-        will just mess it up
+        """This is required otherwise the memoize function will just mess it up
         """
         return hash(self.path)
 

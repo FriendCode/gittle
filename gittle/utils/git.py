@@ -4,6 +4,9 @@ from StringIO import StringIO
 # Dulwich imports
 from dulwich import patch
 
+# Funky imports
+from funky import first
+
 
 def commit_name_email(commit_author):
     try:
