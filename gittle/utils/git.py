@@ -5,7 +5,7 @@ from StringIO import StringIO
 from dulwich import patch
 
 # Funky imports
-from funky import first
+from funky import first, true_only, rest
 
 
 def commit_name_email(commit_author):
