@@ -775,15 +775,15 @@ class Gittle(object):
 
     @property
     def branches(self):
-        return self._refs_by_pattern()
+        return self._refs_by_pattern(self.REFS_BRANCHES)
 
     @property
     def remote_branches(self):
-        return self._refs_by_pattern('refs/remotes/')
+        return self._refs_by_pattern(self.REFS_REMOTES)
 
     @property
     def tags(self):
-        return self._refs_by_pattern('refs/tags/')
+        return self._refs_by_pattern(self.REFS_TAGS)
 
     @property
     def remotes(self):
