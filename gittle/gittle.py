@@ -87,6 +87,12 @@ class Gittle(object):
     # Permissions
     MODE_DIRECTORY = 040000  # Used to tell if a tree entry is a directory
 
+    # Tree depth
+    MAX_TREE_DEPTH = 1000
+
+    # Acceptable Root paths
+    ROOT_PATHS = (None, os.path.curdir, os.path.sep, '')
+
     def __init__(self, repo_or_path, origin_uri=None, auth=None, *args, **kwargs):
         if isinstance(repo_or_path, DulwichRepo):
             self.repo = repo_or_path
@@ -409,7 +415,6 @@ class Gittle(object):
         return utils.paths.subpaths(self.path, filters=self.filters)
 
     @property
-    #@utils.memoize
     @funky.transform(set)
     def trackable_files(self):
         return self.raw_files - self.ignored_files
@@ -594,7 +599,7 @@ class Gittle(object):
         elif isinstance(commit_obj, basestring):
             # Can't use self[commit_obj] to avoid infinite recursion
             commit_obj = self.repo[commit_obj]
-        return commit_obj.sha().hexdigest()
+        return commit_obj.id
 
     def _blob_data(self, sha):
         """Return a blobs content for a given SHA
@@ -654,6 +659,8 @@ class Gittle(object):
         """Returns a dict of the following Format :
             {
                 "directory/filename.txt": {
+                    'name': 'filename.txt',
+                    'path': "directory/filename.txt",
                     "sha": "xxxxxxxxxxxxxxxxxxxx",
                     "data": "blablabla",
                     "mode": 0xxxxx",
@@ -675,17 +682,24 @@ class Gittle(object):
             # Check if entry is a directory
             if mode == self.MODE_DIRECTORY:
                 context.update(
-                    self.get_commit_files(sha, parent_path=path, is_tree=True, paths=paths)
+                    self.get_commit_files(sha, parent_path=os.path.join(parent_path, path), is_tree=True, paths=paths)
                 )
-            else:
-                subpath = os.path.join(parent_path, path)
-                # Only add the files we want
-                if paths is None or subpath in paths:
-                    context[subpath] = {
-                        'mode': mode,
-                        'sha': sha,
-                        'data': self._blob_data(sha),
-                    }
+                continue
+
+            subpath = os.path.join(parent_path, path)
+
+            # Only add the files we want
+            if not(paths is None or subpath in paths):
+                continue
+
+            # Add file entry
+            context[subpath] = {
+                'name': path,
+                'path': subpath,
+                'mode': mode,
+                'sha': sha,
+                'data': self._blob_data(sha),
+            }
         return context
 
     def file_versions(self, path):
@@ -710,7 +724,6 @@ class Gittle(object):
                 seen_shas.add(file_sha)
 
             # Add file info
-            file_data['path'] = file_path
             commit['file'] = file_data
             versions.append(file_data)
         return versions
@@ -801,21 +814,115 @@ class Gittle(object):
         }
 
     def create_branch(self, base_branch, new_branch, tracking=None):
-        base_ref = self._format_ref_branch(base_branch)
+        """Try creating a new branch which tracks the given remote
+            if such a branch does not exist then branch off a local branch
+        """
+
+        # The remote to track
+        tracking = self.DEFAULT_REMOTE
+
+        # Already exists
+        if new_branch in self.branches:
+            raise Exception("branch %s already exists" % new_branch)
+
+        # Get information about remote_branch
+        remote_branch = os.path.sep.join([tracking, base_branch])
+
+        # Fork Local
+        if base_branch in self.branches:
+            base_ref = self._format_ref_branch(base_branch)
+        # Fork remote
+        elif remote_branch in self.remote_branches:
+            base_ref = self._format_ref_remote(remote_branch)
+            # TODO : track
+        else:
+            raise Exception("Can not find the branch named '%s' to fork either locally or in '%s'" % (base_branch, tracking))
+
+        # Reference of new branch
         new_ref = self._format_ref_branch(new_branch)
 
+        # Copy reference to create branch
         self.repo.refs[new_ref] = self.repo.refs[base_ref]
 
-    def switch_branch(self, branch_name, track_remote=None):
+        return new_ref
+
+    def switch_branch(self, branch_name, tracking=None, create=None):
         """Changes the current branch
         """
+        if create is None:
+            create = True
+
+        # Check if branch exists
+        if not branch_name in self.branches:
+            self.create_branch(branch_name, branch_name, tracking=tracking)
+
+        # Get branch reference
         branch_ref = self._format_ref_branch(branch_name)
 
         # Change main branch
         self.repo.refs.set_symbolic_ref('HEAD', branch_ref)
 
         if self.is_working:
+            # Remove all files
+            self.clean_working()
+
+            # Add files for the current branch
             self.checkout_all()
+
+    def clean(self, force=None, directories=None):
+        untracked_files = self.untracked_files
+        map(os.remove, untracked_files)
+        return untracked_files
+
+    def clean_working(self):
+        """Purges all the working (removes everything except .git)
+            used by checkout_all to get clean branch switching
+        """
+        return self.clean()
+
+    def _get_fs_structure(self, tree_sha, depth=None, parent_sha=None):
+        tree = self[tree_sha]
+        structure = {}
+        if depth is None:
+            depth = self.MAX_TREE_DEPTH
+        elif depth == 0:
+            return structure
+        for mode, path, sha in tree.entries():
+            # tree
+            if mode == self.MODE_DIRECTORY:
+                # Recur
+                structure[path] = self._get_fs_structure(sha, depth=depth - 1, parent_sha=tree_sha)
+            # commit
+            else:
+                structure[path] = sha
+        structure['.'] = tree_sha
+        structure['..'] = parent_sha or tree_sha
+        return structure
+
+    def _get_fs_structure_by_path(self, tree_sha, path):
+        parts = path.split(os.path.sep)
+        depth = len(parts) + 1
+        structure = self._get_fs_structure(tree_sha, depth=depth)
+
+        return funky.subkey(structure, parts)
+
+    def commit_ls(self, ref, subpath=None):
+        """List a "directory" for a given commit
+            using the tree of thqt commit
+        """
+        tree_sha = self._commit_tree(ref)
+
+        # Root path
+        if subpath in self.ROOT_PATHS:
+            return self._get_fs_structure(tree_sha)
+        # Any other path
+        return self._get_fs_structure_by_path(tree_sha, subpath)
+
+    def commit_file(self, ref, path):
+        """Return info on a given file for a given commit
+        """
+        name, info = self.get_commit_files(ref, paths=[path]).items()[0]
+        return info
 
     def _is_fast_forward(self):
         pass

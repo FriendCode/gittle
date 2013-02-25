@@ -25,3 +25,6 @@ It builds upon dulwich which provides most of the low-level machinery
 ## Refactoring
 - [] Use OO more Internaly
 - [] Perfect exposed API
+
+## Documenting
+- [] Improve doc
