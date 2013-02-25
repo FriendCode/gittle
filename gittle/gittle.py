@@ -914,7 +914,7 @@ class Gittle(object):
 
         # Root path
         if subpath in self.ROOT_PATHS or not subpath:
-            return self._get_fs_structure(tree_sha)
+            return self._get_fs_structure(tree_sha, depth=1)
         # Any other path
         return self._get_fs_structure_by_path(tree_sha, subpath)
 
