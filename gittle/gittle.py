@@ -91,7 +91,7 @@ class Gittle(object):
     MAX_TREE_DEPTH = 1000
 
     # Acceptable Root paths
-    ROOT_PATHS = (None, os.path.curdir, os.path.sep, '')
+    ROOT_PATHS = (os.path.curdir, os.path.sep)
 
     def __init__(self, repo_or_path, origin_uri=None, auth=None, *args, **kwargs):
         if isinstance(repo_or_path, DulwichRepo):
@@ -913,7 +913,7 @@ class Gittle(object):
         tree_sha = self._commit_tree(ref)
 
         # Root path
-        if subpath in self.ROOT_PATHS:
+        if subpath in self.ROOT_PATHS or not subpath:
             return self._get_fs_structure(tree_sha)
         # Any other path
         return self._get_fs_structure_by_path(tree_sha, subpath)
