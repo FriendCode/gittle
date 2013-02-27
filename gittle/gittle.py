@@ -383,7 +383,13 @@ class Gittle(object):
 
         for file_info in structure:
             blob = Blob()
-            blob.data = file_info['data']
+
+            # str only
+            try:
+                blob.data = file_info['data'].encode('ascii')
+            except:
+                # Skip file on encoding errors
+                continue
 
             # Store file's contents
             self.repo.object_store.add_object(blob)
