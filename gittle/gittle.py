@@ -508,11 +508,12 @@ class Gittle(object):
 
     # Return a list of tuples
     # representing the changed elements in the git tree
-    def _changed_entries(self):
+    def _changed_entries(self, ref=None):
+        ref = ref or self.DEFAULT_COMMIT
         if not self.has_commits:
             return []
         obj_sto = self.repo.object_store
-        tree_id = self['HEAD'].tree
+        tree_id = self[ref].tree
         names = self.trackable_files
 
         lookup_func = partial(self.lookup_entry, trackable_files=names)
@@ -570,7 +571,9 @@ class Gittle(object):
     def pending_files_by_state(self):
         files = {
             'modified': self.modified_files,
-            'untracked': self.untracked_files
+            'untracked': self.untracked_files,
+            'added': self.added_files,
+            'removed': self.removed_files
         }
 
         # "Flip" the dictionary
@@ -722,6 +725,14 @@ class Gittle(object):
             compare_to = self.get_previous_commit(commit_sha)
 
         return self._diff_between(compare_to, commit_sha, diff_function=diff_func)
+
+    def diff_working(self, ref=None):
+        """Diff between the current working directory and the HEAD
+        """
+        return utils.git.diff_changes_paths(
+            self.repo.object_store,
+            self._changed_entries(ref=ref)
+        )
 
     def get_commit_files(self, commit_sha, parent_path=None, is_tree=None, paths=None):
         """Returns a dict of the following Format :
