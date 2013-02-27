@@ -72,14 +72,22 @@ def changes_to_pairs(changes):
     ]
 
 
+def _diff_pairs(object_store, pairs, diff_func):
+    return [
+        {
+            'diff': diff_func(object_store, old, new),
+            'new': change_to_dict(new),
+            'old': change_to_dict(old),
+        }
+        for old, new in pairs
+    ]
+
+
 def diff_changes(object_store, changes, diff_func=object_diff):
     """Return a dict of diffs for the changes
     """
     pairs = changes_to_pairs(changes)
-    return {
-        new[0]: diff_func(object_store, old, new)
-        for old, new in pairs
-    }
+    return _diff_pairs(object_store, pairs, diff_func)
 
 
 def obj_blob(object_store, info):
@@ -104,15 +112,27 @@ def changes_to_blobs(object_store, basepath, changes):
     ]
 
 
+def change_to_dict(info):
+    path, mode, sha_or_blob = info
+
+    if sha_or_blob and not is_sha(sha_or_blob):
+        sha = sha_or_blob.id
+    else:
+        sha = sha_or_blob
+
+    return {
+        'path': path,
+        'mode': mode,
+        'sha': sha,
+    }
+
+
 def diff_changes_paths(object_store, basepath, changes):
     """Does a diff assuming that the old blobs are in git and others are unstaged blobs
        in the working directory
     """
     blobs = changes_to_blobs(object_store, basepath, changes)
-    return {
-        new[0]: blob_diff(object_store, old, new)
-        for old, new in blobs
-    }
+    return _diff_pairs(object_store, blobs, blob_diff)
 
 
 def changes_tree_diff(object_store, old_tree, new_tree):
