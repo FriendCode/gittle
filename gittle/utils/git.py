@@ -77,7 +77,7 @@ def diff_changes(object_store, changes, diff_func=object_diff):
     """
     pairs = changes_to_pairs(changes)
     return {
-        newpath: diff_func(object_store, old, new)
+        new[0]: diff_func(object_store, old, new)
         for old, new in pairs
     }
 
