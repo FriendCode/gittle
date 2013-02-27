@@ -93,8 +93,7 @@ def path_blob(basepath, info):
     if not any(info):
         return info
     path, mode, sha = info
-    fullpath = os.path.join(basepath, path)
-    return blob_from_path(fullpath)
+    return blob_from_path(basepath, path)
 
 
 def changes_to_blobs(object_store, basepath, changes):
@@ -154,10 +153,11 @@ def is_sha(sha):
     return isinstance(sha, basestring) and len(sha) == 40
 
 
-def blob_from_path(path):
+def blob_from_path(basepath, path):
     """Returns a tuple of (sha_id, mode, blob)
     """
-    with open(path, 'rb') as working_file:
+    fullpath = os.path.join(basepath, path)
+    with open(fullpath, 'rb') as working_file:
         blob = Blob()
         blob.data = working_file.read()
-    return (path, os.stat(path).st_mode, blob)
+    return (path, os.stat(fullpath).st_mode, blob)
