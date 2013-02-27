@@ -565,13 +565,12 @@ class Gittle(object):
         Returns a list of all files that could be possibly staged
         """
         # Union of both
-        return self.modified_files | self.untracked_files
+        return self.modified_files | self.added_files | self.removed_files
 
     @property
     def pending_files_by_state(self):
         files = {
             'modified': self.modified_files,
-            'untracked': self.untracked_files,
             'added': self.added_files,
             'removed': self.removed_files
         }
