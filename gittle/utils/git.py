@@ -66,7 +66,6 @@ def blob_diff(object_store, *args, **kwargs):
 
 
 def changes_to_pairs(changes):
-    print("Changes = %s" % changes)
     return [
         ((oldpath, oldmode, oldsha), (newpath, newmode, newsha),)
         for (oldpath, newpath), (oldmode, newmode), (oldsha, newsha) in changes
@@ -90,26 +89,27 @@ def obj_blob(object_store, info):
     return (path, mode, object_store[sha])
 
 
-def path_blob(info):
+def path_blob(basepath, info):
     if not any(info):
         return info
     path, mode, sha = info
-    return blob_from_path(path)
+    fullpath = os.path.join(basepath, path)
+    return blob_from_path(fullpath)
 
 
-def changes_to_blobs(object_store, changes):
+def changes_to_blobs(object_store, basepath, changes):
     pairs = changes_to_pairs(changes)
     return [
-        (obj_blob(object_store, old), path_blob(new),)
+        (obj_blob(object_store, old), path_blob(basepath, new),)
         for old, new in pairs
     ]
 
 
-def diff_changes_paths(object_store, changes):
+def diff_changes_paths(object_store, basepath, changes):
     """Does a diff assuming that the old blobs are in git and others are unstaged blobs
        in the working directory
     """
-    blobs = changes_to_blobs(object_store, changes)
+    blobs = changes_to_blobs(object_store, basepath, changes)
     return {
         new[0]: blob_diff(object_store, old, new)
         for old, new in blobs

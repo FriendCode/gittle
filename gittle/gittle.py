@@ -730,6 +730,7 @@ class Gittle(object):
         """
         return utils.git.diff_changes_paths(
             self.repo.object_store,
+            self.path,
             self._changed_entries(ref=ref)
         )
 
