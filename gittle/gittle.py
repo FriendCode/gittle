@@ -382,22 +382,27 @@ class Gittle(object):
         tree = Tree()
 
         for file_info in structure:
-            blob = Blob()
 
             # str only
             try:
-                blob.data = file_info['data'].encode('ascii')
+                data = file_info['data'].encode('ascii')
+                name = file_info['name'].encode('ascii')
+                mode = file_info['mode']
             except:
                 # Skip file on encoding errors
                 continue
+
+            blob = Blob()
+
+            blob.data = data
 
             # Store file's contents
             self.repo.object_store.add_object(blob)
 
             # Add blob entry
             tree.add(
-                file_info['name'],
-                file_info['mode'],
+                name,
+                mode,
                 blob.id
             )
 
