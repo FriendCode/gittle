@@ -13,7 +13,7 @@ from functools import partial, wraps
 from dulwich.repo import Repo as DulwichRepo
 from dulwich.client import get_transport_and_path
 from dulwich.index import build_index_from_tree, changes_from_tree
-from dulwich.objects import Tree
+from dulwich.objects import Tree, Blob
 
 # Funky imports
 import funky
@@ -355,21 +355,53 @@ class Gittle(object):
         kwargs.setdefault('bare', True)
         return cls.clone(*args, **kwargs)
 
-    def _commit(self, committer=None, author=None, message=None, files=None, *args, **kwargs):
-        modified_files = files or self.modified_files
-        logging.warning("STAGING : %s" % modified_files)
-        self.add(modified_files)
+    def _commit(self, committer=None, author=None, message=None, files=None, tree=None, *args, **kwargs):
+
+        if not tree:
+            # If no tree then stage files
+            modified_files = files or self.modified_files
+            logging.warning("STAGING : %s" % modified_files)
+            self.add(modified_files)
+
+        # Messages
         message = message or self.DEFAULT_MESSAGE
         author_msg = self._format_userinfo(author)
         committer_msg = self._format_userinfo(committer)
+
         return self.repo.do_commit(
             message=message,
             author=author_msg,
             committer=committer_msg,
-            encoding='UTF-8')
+            encoding='UTF-8',
+            tree=tree,
+            *args, **kwargs
+        )
+
+    def _tree_from_structure(self, structure):
+        # TODO : Support directories
+        tree = Tree()
+
+        for file_info in structure:
+            blob = Blob()
+            blob.data = file_info['data']
+
+            # Store file's contents
+            self.repo.object_store.add_object(blob)
+
+            # Add blob entry
+            tree.add(
+                file_info['name'],
+                file_info['mode'],
+                blob.id
+            )
+
+        # Store tree
+        self.repo.object_store.add_object(tree)
+
+        return tree.id
 
     # Like: git commmit -a
-    def commit(self, name=None, email=None, message=None, files=None):
+    def commit(self, name=None, email=None, message=None, files=None, *args, **kwargs):
         user_info = {
             'name': name,
             'email': email,
@@ -378,7 +410,32 @@ class Gittle(object):
             committer=user_info,
             author=user_info,
             message=message,
-            files=files)
+            files=files,
+            *args,
+            **kwargs
+        )
+
+    def commit_structure(self, name=None, email=None, message=None, structure=None, *args, **kwargs):
+        """Main use is to do commits directly to bare repositories
+        For example doing a first Initial Commit so the repo can be cloned and worked on right away
+        """
+        if not structure:
+            return
+        tree = self._tree_from_structure(structure)
+
+        user_info = {
+            'name': name,
+            'email': email,
+        }
+
+        return self._commit(
+            committer=user_info,
+            author=user_info,
+            message=message,
+            tree=tree,
+            *args,
+            **kwargs
+        )
 
     # Push all local commits
     # and pull all remote commits
