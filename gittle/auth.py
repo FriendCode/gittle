@@ -10,9 +10,6 @@ import os
 # Paramiko imports
 import paramiko
 
-# Funky imports
-from funky import negate
-
 
 # Exports
 __all__ = ('GittleAuth',)
@@ -35,11 +32,16 @@ class GittleAuth(object):
         'username',
         'password',
         'pkey',
+        'look_for_keys',
+        'allow_agent'
     )
 
-    def __init__(self, username=None, password=None, pkey=None):
+    def __init__(self, username=None, password=None, pkey=None, look_for_keys=None, allow_agent=None):
         self.username = username
         self.password = password
+        self.allow_agent = allow_agent
+        self.look_for_keys = look_for_keys
+
         self.pkey = self.setup_pkey(pkey)
 
     def setup_pkey(self, pkey):
@@ -53,14 +55,18 @@ class GittleAuth(object):
         return self.username and self.password
 
     @property
-    @negate
     def can_pkey(self):
-        return self.pkey is None
+        return not self.pkey is None
+
+    @property
+    def could_other(self):
+        return self.look_for_keys or self.allow_agent
 
     def can_auth(self):
         return any([
             self.can_password,
             self.can_pkey,
+            self.could_other
         ])
 
     def kwargs(self):

@@ -860,7 +860,8 @@ class Gittle(object):
 
         return dict(
             map(item_map,
-                filter(item_filter,
+                filter(
+                    item_filter,
                     refs.items()
                 )
             )
