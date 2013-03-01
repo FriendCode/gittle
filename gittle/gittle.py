@@ -278,14 +278,19 @@ class Gittle(object):
         client, remote_path = get_transport_and_path(origin_uri, **client_kwargs)
         return client, remote_path
 
-    def push_to(self, origin_uri, branch_name=None):
+    def push_to(self, origin_uri, branch_name=None, progress=None):
         selector = self._wants_branch(branch_name=branch_name)
         client, remote_path = self.get_client(origin_uri)
-        return client.send_pack(remote_path, selector, self.repo.object_store.generate_pack_contents)
+        return client.send_pack(
+            remote_path,
+            selector,
+            self.repo.object_store.generate_pack_contents,
+            progress=progress
+        )
 
     # Like: git push
-    def push(self, origin_uri=None, branch_name=None):
-        return self.push_to(origin_uri, branch_name)
+    def push(self, origin_uri=None, branch_name=None, progress=None):
+        return self.push_to(origin_uri, branch_name, progress)
 
     # Not recommended at ALL ... !!!
     def dirty_pull_from(self, origin_uri, branch_name=None):
