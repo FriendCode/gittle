@@ -1,13 +1,12 @@
 # Python imports
-import logging
-
+import os
 try:
     # Try importing the faster version
     from cStringIO import StringIO
 except ImportError:
     # Fallback to pure python if not available
     from StringIO import StringIO
-import os
+
 
 # Paramiko imports
 try:
@@ -15,7 +14,6 @@ try:
     HAS_PARAMIKO = True
 except ImportError:
     HAS_PARAMIKO = False
-    logging.warning("Gittle won't be able to authenticate over SSH with keys without the 'paramiko' module")
 
 # Local imports
 from .exceptions import InvalidRSAKey
