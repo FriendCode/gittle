@@ -1,4 +1,6 @@
 # Python imports
+import logging
+
 try:
     # Try importing the faster version
     from cStringIO import StringIO
@@ -8,7 +10,15 @@ except ImportError:
 import os
 
 # Paramiko imports
-import paramiko
+try:
+    import paramiko
+    HAS_PARAMIKO = True
+except ImportError:
+    HAS_PARAMIKO = False
+    logging.warning("Gittle won't be able to authenticate over SSH with keys without the 'paramiko' module")
+
+# Local imports
+from .exceptions import InvalidRSAKey
 
 
 # Exports
@@ -48,7 +58,10 @@ class GittleAuth(object):
         pkey_file = get_pkey_file(pkey)
         if not pkey_file:
             return None
-        return paramiko.RSAKey.from_private_key(pkey_file)
+        if HAS_PARAMIKO:
+            return paramiko.RSAKey.from_private_key(pkey_file)
+        else:
+            raise InvalidRSAKey('Requires paramiko to build RSA key')
 
     @property
     def can_password(self):
