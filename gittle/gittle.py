@@ -216,11 +216,14 @@ class Gittle(object):
     # Generate a branch selector (used for pushing)
     def _wants_branch(self, branch_name=None):
         branch_name = branch_name or self.DEFAULT_BRANCH
+        refs_key = self._format_ref_branch(branch_name)
+        sha = self.branches[branch_name]
 
         def wants_func(old):
-            refs_key = "refs/heads/%s" % branch_name
+            print("OLD = %s" % old)
+            refs_key = self._format_ref_branch(branch_name)
             return {
-                refs_key: self.repo.refs["HEAD"]
+                refs_key: sha
             }
         return wants_func
 
