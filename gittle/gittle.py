@@ -111,6 +111,9 @@ class Gittle(object):
         # The remote url
         self.origin_uri = origin_uri
 
+        # Report client activty
+        self._report_activity = report_activity
+
         # Build ignore filter
         self.hidden_regexes = copy.copy(self.HIDDEN_REGEXES)
         self.hidden_regexes.extend(self._get_ignore_regexes())
