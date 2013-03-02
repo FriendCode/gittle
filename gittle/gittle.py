@@ -93,7 +93,7 @@ class Gittle(object):
     # Acceptable Root paths
     ROOT_PATHS = (os.path.curdir, os.path.sep)
 
-    def __init__(self, repo_or_path, origin_uri=None, auth=None, *args, **kwargs):
+    def __init__(self, repo_or_path, origin_uri=None, auth=None, report_activity=None, *args, **kwargs):
         if isinstance(repo_or_path, DulwichRepo):
             self.repo = repo_or_path
         elif isinstance(repo_or_path, Gittle):
@@ -124,6 +124,11 @@ class Gittle(object):
             self.authenticator = auth
         else:
             self.auth(*args, **kwargs)
+
+    def report_activity(self, *args, **kwargs):
+        if not self._report_activity:
+            return
+        return self._report_activity(*args, **kwargs)
 
     def _format_author(self, name, email):
         return "%s <%s>" % (name, email)
@@ -277,6 +282,9 @@ class Gittle(object):
 
         client_kwargs.update(auth_kwargs)
         client_kwargs.update(kwargs)
+        client_kwargs.update({
+            'report_activity': self.report_activity
+        })
 
         client, remote_path = get_transport_and_path(origin_uri, **client_kwargs)
         return client, remote_path
