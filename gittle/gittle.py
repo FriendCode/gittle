@@ -14,6 +14,7 @@ from dulwich.repo import Repo as DulwichRepo
 from dulwich.client import get_transport_and_path
 from dulwich.index import build_index_from_tree, changes_from_tree
 from dulwich.objects import Tree, Blob
+from dulwich.server import update_server_info
 
 # Funky imports
 import funky
@@ -344,6 +345,8 @@ class Gittle(object):
         # Checkout working directories
         if not bare:
             self.checkout_all()
+        else:
+            self.update_server_info()
 
     @classmethod
     def clone(cls, origin_uri, local_path, auth=None, mkdir=True, bare=False, **kwargs):
@@ -911,6 +914,10 @@ class Gittle(object):
             if keys[0] == 'remote'
         }
 
+    def add_ref(self, new_ref, old_ref):
+        self.repo.refs[new_ref] = self.repo.refs[old_ref]
+        self.update_server_info()
+
     def create_branch(self, base_branch, new_branch, tracking=None):
         """Try creating a new branch which tracks the given remote
             if such a branch does not exist then branch off a local branch
@@ -940,7 +947,7 @@ class Gittle(object):
         new_ref = self._format_ref_branch(new_branch)
 
         # Copy reference to create branch
-        self.repo.refs[new_ref] = self.repo.refs[base_ref]
+        self.add_ref(new_ref, base_ref)
 
         return new_ref
 
@@ -1021,6 +1028,11 @@ class Gittle(object):
         """
         name, info = self.get_commit_files(ref, paths=[path]).items()[0]
         return info
+
+    def update_server_info(self):
+        if not self.is_bare:
+            return
+        update_server_info(self.repo)
 
     def _is_fast_forward(self):
         pass
