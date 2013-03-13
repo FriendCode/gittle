@@ -1029,6 +1029,10 @@ class Gittle(object):
         name, info = self.get_commit_files(ref, paths=[path]).items()[0]
         return info
 
+    def commit_tree(self, ref, *args, **kwargs):
+        tree_sha = self._commit_tree(ref)
+        return self._get_fs_structure(tree_sha, *args, **kwargs)
+
     def update_server_info(self):
         if not self.is_bare:
             return
