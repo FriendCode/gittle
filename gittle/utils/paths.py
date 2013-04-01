@@ -8,7 +8,7 @@ from funky import first, arglist
 
 # Path filters
 def path_filter_visible(path, abspath):
-    return not path.startswith('.')
+    return True
 
 
 def path_filter_file(path, abspath):
