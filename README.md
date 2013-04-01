@@ -19,6 +19,9 @@ It builds upon dulwich which provides most of the low-level machinery
 - [] Recursive
 - [] Merge branches
 
+## Diff
+- [X] Filter binary files
+
 ## Testing
 - [] Unit tests
 

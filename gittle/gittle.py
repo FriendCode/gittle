@@ -737,7 +737,7 @@ class Gittle(object):
         """
         return self[commit_sha].tree
 
-    def diff(self, commit_sha, compare_to=None, diff_type=None):
+    def diff(self, commit_sha, compare_to=None, diff_type=None, filter_binary=True):
         diff_type = diff_type or self.DEFAULT_DIFF_TYPE
         diff_func = self.DIFF_FUNCTIONS[diff_type]
 
@@ -746,13 +746,14 @@ class Gittle(object):
 
         return self._diff_between(compare_to, commit_sha, diff_function=diff_func)
 
-    def diff_working(self, ref=None):
+    def diff_working(self, ref=None, filter_binary=True):
         """Diff between the current working directory and the HEAD
         """
         return utils.git.diff_changes_paths(
             self.repo.object_store,
             self.path,
-            self._changed_entries(ref=ref)
+            self._changed_entries(ref=ref),
+            filter_binary=filter_binary
         )
 
     def get_commit_files(self, commit_sha, parent_path=None, is_tree=None, paths=None):
@@ -828,7 +829,7 @@ class Gittle(object):
             versions.append(file_data)
         return versions
 
-    def _diff_between(self, old_commit_sha, new_commit_sha, diff_function=None):
+    def _diff_between(self, old_commit_sha, new_commit_sha, diff_function=None, filter_binary=True):
         """Internal method for getting a diff between two commits
             Please use .diff method unless you have very speciic needs
         """
@@ -842,7 +843,7 @@ class Gittle(object):
 
         new_tree = self._commit_tree(new_commit_sha)
 
-        return diff_function(self.repo.object_store, old_tree, new_tree)
+        return diff_function(self.repo.object_store, old_tree, new_tree, filter_binary=filter_binary)
 
     def changes(self, *args, **kwargs):
         """ List of changes between two SHAs

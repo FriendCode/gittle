@@ -9,6 +9,20 @@ from dulwich.objects import Blob
 # Funky imports
 from funky import first, true_only, rest
 
+# Mimer imports
+from mimer import is_readable
+
+
+def _is_readable_info(info):
+    path, mode, sha = info
+    return path is None or is_readable(path)
+
+
+def is_readable_change(change):
+    return all(
+        map(_is_readable_info, change)
+    )
+
 
 def commit_name_email(commit_author):
     try:
@@ -83,10 +97,12 @@ def _diff_pairs(object_store, pairs, diff_func):
     ]
 
 
-def diff_changes(object_store, changes, diff_func=object_diff):
+def diff_changes(object_store, changes, diff_func=object_diff, filter_binary=True):
     """Return a dict of diffs for the changes
     """
     pairs = changes_to_pairs(changes)
+    if filter_binary:
+        pairs = filter(is_readable_change, pairs)
     return _diff_pairs(object_store, pairs, diff_func)
 
 
@@ -104,8 +120,7 @@ def path_blob(basepath, info):
     return blob_from_path(basepath, path)
 
 
-def changes_to_blobs(object_store, basepath, changes):
-    pairs = changes_to_pairs(changes)
+def changes_to_blobs(object_store, basepath, pairs):
     return [
         (obj_blob(object_store, old), path_blob(basepath, new),)
         for old, new in pairs
@@ -127,11 +142,14 @@ def change_to_dict(info):
     }
 
 
-def diff_changes_paths(object_store, basepath, changes):
+def diff_changes_paths(object_store, basepath, changes, filter_binary=True):
     """Does a diff assuming that the old blobs are in git and others are unstaged blobs
        in the working directory
     """
-    blobs = changes_to_blobs(object_store, basepath, changes)
+    pairs = changes_to_pairs(changes)
+    if filter_binary:
+        pairs = filter(is_readable_change, pairs)
+    blobs = changes_to_blobs(object_store, basepath, pairs)
     return _diff_pairs(object_store, blobs, blob_diff)
 
 
