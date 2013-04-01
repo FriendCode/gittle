@@ -7,7 +7,7 @@ from dulwich import patch
 from dulwich.objects import Blob
 
 # Funky imports
-from funky import first, true_only, rest
+from funky import first, true_only, rest, negate
 
 # Mimer imports
 from mimer import is_readable
@@ -22,6 +22,12 @@ def is_readable_change(change):
     return all(
         map(_is_readable_info, change)
     )
+
+is_unreadable_change = negate(is_readable_change)
+
+
+def dummy_diff(*args, **kwargs):
+    return ''
 
 
 def commit_name_email(commit_author):
@@ -86,12 +92,13 @@ def changes_to_pairs(changes):
     ]
 
 
-def _diff_pairs(object_store, pairs, diff_func):
+def _diff_pairs(object_store, pairs, diff_func, diff_type='text'):
     return [
         {
             'diff': diff_func(object_store, old, new),
             'new': change_to_dict(new),
             'old': change_to_dict(old),
+            'type': diff_type
         }
         for old, new in pairs
     ]
@@ -101,9 +108,13 @@ def diff_changes(object_store, changes, diff_func=object_diff, filter_binary=Tru
     """Return a dict of diffs for the changes
     """
     pairs = changes_to_pairs(changes)
-    if filter_binary:
-        pairs = filter(is_readable_change, pairs)
-    return _diff_pairs(object_store, pairs, diff_func)
+    readable_pairs = filter(is_readable_change, pairs)
+    unreadable_pairs = filter(is_unreadable_change, pairs)
+
+    return sum([
+        _diff_pairs(object_store, readable_pairs, diff_func),
+        _diff_pairs(object_store, unreadable_pairs, dummy_diff, 'binary')
+    ], [])
 
 
 def obj_blob(object_store, info):
@@ -147,10 +158,15 @@ def diff_changes_paths(object_store, basepath, changes, filter_binary=True):
        in the working directory
     """
     pairs = changes_to_pairs(changes)
-    if filter_binary:
-        pairs = filter(is_readable_change, pairs)
-    blobs = changes_to_blobs(object_store, basepath, pairs)
-    return _diff_pairs(object_store, blobs, blob_diff)
+    readable_pairs = filter(is_readable_change, pairs)
+    unreadable_pairs = filter(is_unreadable_change, pairs)
+
+    blobs = changes_to_blobs(object_store, basepath, readable_pairs)
+
+    return sum([
+        _diff_pairs(object_store, blobs, blob_diff),
+        _diff_pairs(object_store, unreadable_pairs, dummy_diff, 'binary')
+    ], [])
 
 
 def changes_tree_diff(object_store, old_tree, new_tree):
