@@ -173,12 +173,12 @@ def changes_tree_diff(object_store, old_tree, new_tree):
     return object_store.tree_changes(old_tree, new_tree)
 
 
-def dict_tree_diff(object_store, old_tree, new_tree):
+def dict_tree_diff(object_store, old_tree, new_tree, filter_binary=True):
     """Returns a dictionary where the keys are the filenames and their respective
     values are their diffs
     """
     changes = changes_tree_diff(object_store, old_tree, new_tree)
-    return diff_changes(object_store, changes)
+    return diff_changes(object_store, changes, filter_binary=filter_binary)
 
 
 def classic_tree_diff(object_store, old_tree, new_tree):
