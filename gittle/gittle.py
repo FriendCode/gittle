@@ -206,7 +206,8 @@ class Gittle(object):
         return []
 
     @funky.uniquify
-    def recent_contributors(self, n=100):
+    def recent_contributors(self, n=None):
+        n = n or 10
         return funky.pluck(self.commit_info(end=n), 'author')
 
     @property
