@@ -205,6 +205,10 @@ class Gittle(object):
             return commits[start:end]
         return []
 
+    @funky.uniquify
+    def recent_contributors(self, n=100):
+        return funky.pluck(self.commit_info(end=n), 'author')
+
     @property
     def commit_count(self):
         return len(self.walker)
@@ -1061,3 +1065,4 @@ class Gittle(object):
     fork = clone_bare
     log = commit_info
     diff_count = changes_count
+    comtributors = recent_contributors
