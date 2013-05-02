@@ -41,9 +41,18 @@ def commit_name_email(commit_author):
     return name, email
 
 
+def contributor_from_raw(raw_author):
+    name, email = commit_name_email(raw_author)
+    return {
+        'name': name,
+        'email': email,
+        'raw': raw_author
+    }
+
+
 def commit_info(commit):
-    author_name, author_email = commit_name_email(commit.author)
-    committer_name, committer_email = commit_name_email(commit.committer)
+    author = contributor_from_raw(commit.author)
+    committer = contributor_from_raw(commit.committer)
 
     message_lines = commit.message.splitlines()
     summary = first(message_lines, '')
@@ -56,12 +65,8 @@ def commit_info(commit):
     )
 
     return {
-        'author': commit.author,
-        'author_name': author_name,
-        'author_email': author_email,
-        'committer': commit.committer,
-        'committer_name': committer_name,
-        'committer_email': committer_email,
+        'author': author,
+        'committer': committer,
         'sha': commit.sha().hexdigest(),
         'time': commit.commit_time,
         'timezone': commit.commit_timezone,
