@@ -338,7 +338,7 @@ class Gittle(object):
         return remote_refs
 
 
-    def _setup_fetched_refs(self, refs, origin):
+    def _setup_fetched_refs(self, refs, origin, bare):
         remote_tags = utils.git.subrefs(refs, 'refs/tags')
         remote_heads = utils.git.subrefs(refs, 'refs/heads')
 
@@ -346,9 +346,14 @@ class Gittle(object):
         clean_remote_tags = utils.git.clean_refs(remote_tags)
         clean_remote_heads = utils.git.clean_refs(remote_heads)
 
+        # Base of new refs
+        heads_base = 'refs/remotes/' + origin
+        if bare:
+            heads_base = 'refs/heads'
+
         # Import branches
         self.import_refs(
-            'refs/remotes/' + origin,
+            heads_base,
             clean_remote_heads
         )
 
@@ -375,7 +380,7 @@ class Gittle(object):
         # print("REFS = %s" % remote_refs)
 
         # Update refs (branches, tags, HEAD)
-        self._setup_fetched_refs(remote_refs, origin)
+        self._setup_fetched_refs(remote_refs, origin, bare)
 
         # Checkout working directories
         if not bare:
