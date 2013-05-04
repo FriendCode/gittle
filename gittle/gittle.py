@@ -188,31 +188,38 @@ class Gittle(object):
             return False
         return True
 
-    @property
-    def walker(self):
+    def ref_walker(self, ref=None):
         """
         Very simple, basic walker
         """
-        return self.repo.revision_history(self.repo.head())
+        ref = ref or 'HEAD'
+        sha = self._commit_sha(ref)
+        return self.repo.revision_history(sha)
 
-    def commit_info(self, start=0, end=None):
+    def branch_walker(self, branch):
+        branch = branch or self.DEFAULT_BRANCH
+        ref = self._format_ref_branch(branch)
+        return self.ref_walker(ref)
+
+    def commit_info(self, start=0, end=None, branch=None):
         """Return a generator of commits with all their attached information
         """
-        if self.has_commits:
-            commits = [utils.git.commit_info(entry) for entry in self.walker]
-            if not end:
-                return commits
-            return commits[start:end]
-        return []
+        if not self.has_commits:
+            return []
+        commits = [utils.git.commit_info(entry) for entry in self.branch_walker(branch)]
+        if not end:
+            return commits
+        return commits[start:end]
+
 
     @funky.uniquify
-    def recent_contributors(self, n=None):
+    def recent_contributors(self, n=None, branch=None):
         n = n or 10
-        return funky.pluck(self.commit_info(end=n), 'author')
+        return funky.pluck(self.commit_info(end=n, branch=branch), 'author')
 
     @property
     def commit_count(self):
-        return len(self.walker)
+        return len(self.ref_walker())
 
     def commits(self):
         """Return a list of SHAs for all the concerned commits
