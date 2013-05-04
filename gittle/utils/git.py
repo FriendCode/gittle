@@ -1,13 +1,14 @@
 # Python imports
 import os
 from StringIO import StringIO
+from functools import partial
 
 # Dulwich imports
 from dulwich import patch
 from dulwich.objects import Blob
 
 # Funky imports
-from funky import first, true_only, rest, negate
+from funky import first, true_only, rest, negate, transform
 
 # Mimer imports
 from mimer import is_readable
@@ -220,3 +221,28 @@ def blob_from_path(basepath, path):
         blob = Blob()
         blob.data = working_file.read()
     return (path, os.stat(fullpath).st_mode, blob)
+
+
+def subkey(base, refkey):
+    if not refkey.startswith(base):
+        return None
+    base_len = len(base) + 1
+    return refkey[base_len:]
+
+
+def subrefs(refs_dict, base):
+    """Return the contents of this container as a dictionary.
+    """
+    base = base or ''
+    keys = refs_dict.keys()
+    subkeys = map(
+        partial(subkey, base),
+        keys
+    )
+    key_pairs = zip(keys, subkeys)
+
+    return {
+        newkey: refs_dict[oldkey]
+        for oldkey, newkey in key_pairs
+        if newkey
+    }

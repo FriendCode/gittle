@@ -337,21 +337,45 @@ class Gittle(object):
 
         return remote_refs
 
-    def fetch(self, origin_uri=None, bare=None):
+
+    def _setup_fetched_refs(self, refs, origin):
+        # Import branches
+        self.import_refs(
+            'refs/remotes/' + origin,
+            utils.git.subrefs(refs, 'refs/heads')
+        )
+
+        # Import tags
+        self.import_refs(
+            'refs/tags',
+            utils.git.subrefs(refs, 'refs/tags')
+        )
+
+        # Update HEAD
+        self['HEAD'] = remote_refs['HEAD']
+
+
+
+    def fetch(self, origin_uri=None, bare=None, origin=None):
         bare = bare or False
+        origin = origin or self.DEFAULT_REMOTE
 
         # Remote refs
         remote_refs = self.fetch_remote(origin_uri)
 
         # Update head
         # Hit repo because head doesn't yet exist so
-        self.repo['HEAD'] = remote_refs['HEAD']
+        # print("REFS = %s" % remote_refs)
+
+        # Update refs (branches, tags, HEAD)
+        self._setup_fetched_refs(remote_refs, origin)
 
         # Checkout working directories
         if not bare:
             self.checkout_all()
         else:
             self.update_server_info()
+
 
     @classmethod
     def clone(cls, origin_uri, local_path, auth=None, mkdir=True, bare=False, **kwargs):
@@ -892,6 +916,13 @@ class Gittle(object):
     @property
     def refs(self):
         return self.repo.get_refs()
+
+    def set_refs(refs_dict):
+        for k, v in refs_dict.items():
+            self.repo[k] = v
+
+    def import_refs(self, base, other):
+        return self.repo.refs.import_refs(base, other)
 
     @property
     def branches(self):
