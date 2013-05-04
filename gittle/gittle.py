@@ -1098,7 +1098,7 @@ class Gittle(object):
         return self.repo[sha]
 
     def __setitem__(self, key, value):
-        self.repo[sha] = value
+        self.repo[key] = value
 
     # Alias to clone_bare
     fork = clone_bare
