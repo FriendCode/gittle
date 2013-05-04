@@ -339,20 +339,27 @@ class Gittle(object):
 
 
     def _setup_fetched_refs(self, refs, origin):
+        remote_tags = utils.git.subrefs(refs, 'refs/tags')
+        remote_heads = utils.git.subrefs(refs, 'refs/heads')
+
+        # Filter refs
+        clean_remote_tags = utils.git.clean_refs(remote_tags)
+        clean_remote_heads = utils.git.clean_refs(remote_heads)
+
         # Import branches
         self.import_refs(
             'refs/remotes/' + origin,
-            utils.git.subrefs(refs, 'refs/heads')
+            clean_remote_heads
         )
 
         # Import tags
         self.import_refs(
             'refs/tags',
-            utils.git.subrefs(refs, 'refs/tags')
+            clean_remote_tags
         )
 
         # Update HEAD
-        self['HEAD'] = remote_refs['HEAD']
+        self['HEAD'] = refs['HEAD']
 
 
 

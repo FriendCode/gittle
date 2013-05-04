@@ -246,3 +246,11 @@ def subrefs(refs_dict, base):
         for oldkey, newkey in key_pairs
         if newkey
     }
+
+
+def clean_refs(refs):
+    return {
+        ref: sha
+        for ref, sha in refs.items()
+        if not ref.endswith('^{}')
+    }
