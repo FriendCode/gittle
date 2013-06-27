@@ -947,6 +947,27 @@ class Gittle(object):
     def branches(self):
         return self._refs_by_pattern(self.REFS_BRANCHES)
 
+    def _active_branch(self, refs=None, head=None):
+        head = head or self.head
+        refs = refs or self.branches
+        try:
+            return {
+                branch: branch_head
+                for branch, branch_head in refs.items()
+                if branch_head == head
+            }.items()[0]
+        except IndexError:
+            pass
+        return (None, None)
+
+    @property
+    def active_branch(self):
+        return self._active_branch()[0]
+
+    @property
+    def active_sha(self):
+        return self._active_branch()[1]
+
     @property
     def remote_branches(self):
         return self._refs_by_pattern(self.REFS_REMOTES)
@@ -973,6 +994,14 @@ class Gittle(object):
     def add_ref(self, new_ref, old_ref):
         self.repo.refs[new_ref] = self.repo.refs[old_ref]
         self.update_server_info()
+
+    def remove_ref(self, ref_name):
+        # Returns False if ref doesn't exist
+        if not ref_name in self.repo.refs:
+            return False
+        del self.repo.refs[ref_name]
+        self.update_server_info()
+        return True
 
     def create_branch(self, base_branch, new_branch, tracking=None):
         """Try creating a new branch which tracks the given remote
@@ -1006,6 +1035,10 @@ class Gittle(object):
         self.add_ref(new_ref, base_ref)
 
         return new_ref
+
+    def remove_branch(self, branch_name):
+        ref = self._format_ref_branch(branch_name)
+        return self.remove_ref(ref)
 
     def switch_branch(self, branch_name, tracking=None, create=None):
         """Changes the current branch
