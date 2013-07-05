@@ -20,7 +20,7 @@ setup(name='gittle',
       url='git+ssh://git@friendco.de:friendcode/gittle.git',
       license='MIT',
       author="Aaron O'Mullan",
-      author_email='aaron.omullan@gmail.com',
+      author_email='aaron@friendco.de',
       long_description="""
       Gittle is a wrapper around dulwich. It provides an easy and familiar interface to git.
       It's pure python (no dependancy on the git binary) and has no other dependancies besides
