@@ -50,10 +50,10 @@ auth = GittleAuth(pkey=key)
 Gittle.clone(repo_url, repo_path, auth=auth)
 ```
 
-Or clone bare repository :
+Or clone bare repository (no working directory) :
 
 ```python
-repo = Gittle.clone_bare(repo_url, repo_path)
+repo = Gittle.clone(repo_url, repo_path, bare=True)
 ```
 
 ### Init repository from a path
@@ -62,19 +62,33 @@ repo = Gittle.clone_bare(repo_url, repo_path)
 repo = Gittle.init(path)
 ```
 
+### Get repository information
+
+```python
+# Get list of objects
+repo.commits
+
+# Get list of branches
+repo.branches
+
+# Get list of modified files (in current working directory)
+repo.modified_files
+
+# Get diff between latest commits
+repo.diff('HEAD', 'HEAD~1')
+```
+
 ### Commit
 
 ```python
-repo.stage("test.txt")
+# Stage single file
+repo.stage('file.txt')
+
+# Stage multiple files
+repo.stage(['other1.txt', 'other2.txt'])
+
+# Do the commit
 repo.commit(name="Samy Pesse", email="samy@friendco.de", message="This is a commit")
-```
-
-### Move file
-
-```python
-repo.mv([
-  ('setup.py', 'new.py'),
-])
 ```
 
 ### Pull
@@ -114,12 +128,20 @@ repo.auth(pkey=key_file)
 repo.auth(username="your_name", password="your_password")
 ```
 
-### Create a new branch
+### Branch
 
 ```python
-new_branch = "dev"
-base_branch = "master"
-repo.create_branch(base_branch, new_branch)
+# Create branch off master
+repo.create_branch('dev', 'master')
+
+# Print a list of branches
+print(repo.branches)
+
+# Remove a branch
+repo.remove_branch('dev')
+
+# Print a list of branches
+print(repo.branches)
 ```
 
 ### Get file version
@@ -129,16 +151,10 @@ versions = repo.get_file_versions('gittle/gittle.py')
 print("Found %d versions out of a total of %d commits" % (len(versions), repo.commit_count()))
 ```
 
-### Get pending files (files to commit)
+### Get list of modified files (in current working directory)
 
 ```python
-repo.pending_files
-```
-
-Or get diff working :
-
-```python
-repo.diff_working(None)
+repo.modified_files
 ```
 
 ### Count number of commit
@@ -188,6 +204,10 @@ print repo.commit_file(commit, "testdir/test.txt")
 
 ```python
 from gittle import GitServer
-server = GitServer('/', 'localhost')
-server.serve_forever()
+
+# Read only
+GitServer('/', 'localhost').serve_forever()
+
+# Read/Write
+GitServer('/', 'localhost', perm='rw').serve_forever()
 ```
