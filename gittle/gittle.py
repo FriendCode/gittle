@@ -227,7 +227,10 @@ class Gittle(object):
 
     @property
     def commit_count(self):
-        return len(self.ref_walker())
+        try:
+            return len(self.ref_walker())
+        except KeyError:
+            return 0
 
     def commits(self):
         """Return a list of SHAs for all the concerned commits
