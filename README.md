@@ -3,7 +3,7 @@
 Gittle is a high-level pure-python git library.
 It builds upon dulwich which provides most of the low-level machinery
 
-# You can use it for :
+# Use it for :
 
 - Local
   - [X] Common git operations (add, rm, mv, commit, log)
@@ -26,6 +26,8 @@ It builds upon dulwich which provides most of the low-level machinery
 
 ### Clone a repository
 
+.. code-block:: python
+
     from gittle import Gittle
     
     repo_path = '/tmp/gittle_bare'
@@ -35,24 +37,34 @@ It builds upon dulwich which provides most of the low-level machinery
   
 Or clone bare repository :
 
-      repo = Gittle.clone_bare(repo_url, repo_path)
+.. code-block:: python
+
+    repo = Gittle.clone_bare(repo_url, repo_path)
 
 ### Init repository from a path
 
-      repo = Gittle.init(path)
+.. code-block:: python
+
+    repo = Gittle.init(path)
 
 ### Commit
 
-      repo.stage("test.txt")
-      repo.commit(name="Samy Pesse", email="samy@friendco.de", message="This is a commit")
+.. code-block:: python
+
+    repo.stage("test.txt")
+    repo.commit(name="Samy Pesse", email="samy@friendco.de", message="This is a commit")
   
 ### Move file
+
+.. code-block:: python
 
     repo.mv([
       ('setup.py', 'new.py'),
     ])
 
 ### Pull
+
+.. code-block:: python
 
     repo = Gittle(repo_path, origin_uri=repo_url)
     
@@ -64,6 +76,8 @@ Or clone bare repository :
     repo.pull()
 
 ### Push
+
+.. code-block:: python
 
     repo = Gittle(repo_path, origin_uri=repo_url)
     
@@ -77,11 +91,15 @@ Or clone bare repository :
 
 ### Create a GIT server
 
+.. code-block:: python
+
     from gittle import GitServer
     server = GitServer('/', 'localhost')
     server.serve_forever()
   
 ### Get file version
+
+.. code-block:: python
 
     versions = repo.get_file_versions('gittle/gittle.py')
     print("Found %d versions out of a total of %d commits" % (len(versions), repo.commit_count()))
