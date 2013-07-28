@@ -88,12 +88,12 @@ repo.auth(pkey=key_file)
 g.push()
 ```
 
-### Create a GIT server
+### Create a new branch
 
 ```python
-from gittle import GitServer
-server = GitServer('/', 'localhost')
-server.serve_forever()
+new_branch = "dev"
+base_branch = "master"
+repo.create_branch(base_branch, new_branch)
 ```
 
 ### Get file version
@@ -101,4 +101,67 @@ server.serve_forever()
 ```python
 versions = repo.get_file_versions('gittle/gittle.py')
 print("Found %d versions out of a total of %d commits" % (len(versions), repo.commit_count()))
+```
+
+### Get pending files (files to commit)
+
+```python
+repo.pending_files
+```
+
+Or get diff working :
+
+```python
+repo.diff_working(None)
+```
+
+### Count number of commit
+
+```python
+repo.commit_count
+```
+
+### Get information for commits
+
+List commits :
+
+```python
+# Get 20 first commits
+repo.commit_info(start=0, end=20)
+```
+
+With a given commit :
+
+```python
+commit = "a2105a0d528bf770021de874baf72ce36f6c3ccc"
+```
+
+Diff with another commit :
+
+```python
+old_commit = repo.get_previous_commit(commit, n=1)
+print repo.diff(commit, old_commit)
+```
+
+Explore commit files using :
+
+```python
+commit = "a2105a0d528bf770021de874baf72ce36f6c3ccc"
+
+# Files tree
+print repo.commit_tree(commit)
+
+# List files in a subpath
+print repo.commit_ls(commit, "testdir")
+
+# Read a file
+print repo.commit_file(commit, "testdir/test.txt")
+```
+
+### Create a GIT server
+
+```python
+from gittle import GitServer
+server = GitServer('/', 'localhost')
+server.serve_forever()
 ```
