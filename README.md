@@ -1,4 +1,4 @@
-# Gittle
+# Gittle - Git for humans
 
 Gittle is a high-level pure-python git library.
 It builds upon dulwich which provides most of the low-level machinery
@@ -26,34 +26,34 @@ It builds upon dulwich which provides most of the low-level machinery
 
 ### Clone a repository
 
-.. code-block:: python
+```python
+from gittle import Gittle
 
-    from gittle import Gittle
-    
-    repo_path = '/tmp/gittle_bare'
-    repo_url = 'git://github.com/FriendCode/gittle.git'
-    
-    repo = Gittle.clone(repo_url, repo_path)
-  
+repo_path = '/tmp/gittle_bare'
+repo_url = 'git://github.com/FriendCode/gittle.git'
+
+repo = Gittle.clone(repo_url, repo_path)
+```
+
 Or clone bare repository :
 
-.. code-block:: python
-
-    repo = Gittle.clone_bare(repo_url, repo_path)
+```python
+repo = Gittle.clone_bare(repo_url, repo_path)
+```
 
 ### Init repository from a path
 
-.. code-block:: python
-
-    repo = Gittle.init(path)
+```python
+repo = Gittle.init(path)
+```
 
 ### Commit
 
-.. code-block:: python
+```python
+repo.stage("test.txt")
+repo.commit(name="Samy Pesse", email="samy@friendco.de", message="This is a commit")
+```
 
-    repo.stage("test.txt")
-    repo.commit(name="Samy Pesse", email="samy@friendco.de", message="This is a commit")
-  
 ### Move file
 
 ```python
@@ -64,43 +64,41 @@ repo.mv([
 
 ### Pull
 
-.. code-block:: python
+```python
+repo = Gittle(repo_path, origin_uri=repo_url)
 
-    repo = Gittle(repo_path, origin_uri=repo_url)
-    
-    # Authentication with RSA private key
-    key_file = open('/Users/Me/keys/rsa/private_rsa')
-    repo.auth(pkey=key_file)
-    
-    # Do push
-    repo.pull()
+# Authentication with RSA private key
+key_file = open('/Users/Me/keys/rsa/private_rsa')
+repo.auth(pkey=key_file)
+
+# Do push
+repo.pull()
+```
 
 ### Push
 
-.. code-block:: python
+```python
+repo = Gittle(repo_path, origin_uri=repo_url)
 
-    repo = Gittle(repo_path, origin_uri=repo_url)
-    
-    # Authentication with RSA private key
-    key_file = open('/Users/Me/keys/rsa/private_rsa')
-    repo.auth(pkey=key_file)
-    
-    # Do push
-    g.push()
+# Authentication with RSA private key
+key_file = open('/Users/Me/keys/rsa/private_rsa')
+repo.auth(pkey=key_file)
 
+# Do push
+g.push()
+```
 
 ### Create a GIT server
 
-.. code-block:: python
+```python
+from gittle import GitServer
+server = GitServer('/', 'localhost')
+server.serve_forever()
+```
 
-    from gittle import GitServer
-    server = GitServer('/', 'localhost')
-    server.serve_forever()
-  
 ### Get file version
 
-.. code-block:: python
-
-    versions = repo.get_file_versions('gittle/gittle.py')
-    print("Found %d versions out of a total of %d commits" % (len(versions), repo.commit_count()))
-  
+```python
+versions = repo.get_file_versions('gittle/gittle.py')
+print("Found %d versions out of a total of %d commits" % (len(versions), repo.commit_count()))
+```
