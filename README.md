@@ -56,11 +56,11 @@ Or clone bare repository :
   
 ### Move file
 
-.. code-block:: python
-
-    repo.mv([
-      ('setup.py', 'new.py'),
-    ])
+```python
+repo.mv([
+  ('setup.py', 'new.py'),
+])
+```
 
 ### Pull
 
