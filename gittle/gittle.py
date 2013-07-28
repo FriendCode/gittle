@@ -29,6 +29,14 @@ from gittle import utils
 __all__ = ('Gittle',)
 
 
+# Guarantee that a diretory exists
+def mkdir(path):
+    if mkdir and not(os.path.exists(path)):
+        os.makedirs(path)
+    return
+
+
+
 # Useful decorators
 # A better way to do this in the future would maybe to use Mixins
 def working_only(method):
@@ -276,11 +284,13 @@ class Gittle(object):
     @classmethod
     def init(cls, path):
         """Initialize a repository"""
+        mkdir(path)
         repo = DulwichRepo.init(path)
         return cls(repo)
 
     @classmethod
     def init_bare(cls, path):
+        mkdir(path)
         repo = DulwichRepo.init_bare(path)
         return cls(repo)
 
@@ -322,7 +332,7 @@ class Gittle(object):
     def dirty_pull_from(self, origin_uri, branch_name=None):
         # Remove all previously existing data
         rmtree(self.path)
-        os.makedirs(self.path)
+        mkdir(self.path)
         self.repo = DulwichRepo.init(self.path)
 
         # Fetch brand new copy from remote
@@ -399,8 +409,7 @@ class Gittle(object):
     @classmethod
     def clone(cls, origin_uri, local_path, auth=None, mkdir=True, bare=False, **kwargs):
         """Clone a remote repository"""
-        if mkdir and not(os.path.exists(local_path)):
-            os.makedirs(local_path)
+        mkdir(local_path)
 
         # Initialize the local repository
         if bare:
