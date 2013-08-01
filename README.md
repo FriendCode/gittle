@@ -30,6 +30,10 @@ It builds upon dulwich which provides most of the low-level machinery
 - Diff
   - [X] Filter binary files
 
+## Install it
+
+    pip install gittle
+
 ## Examples : 
 
 ### Clone a repository
