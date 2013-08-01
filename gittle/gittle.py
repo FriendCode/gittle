@@ -30,10 +30,10 @@ __all__ = ('Gittle',)
 
 
 # Guarantee that a diretory exists
-def mkdir(path):
-    if mkdir and not(os.path.exists(path)):
+def mkdir_safe(path):
+    if path and not(os.path.exists(path)):
         os.makedirs(path)
-    return
+    return path
 
 
 
@@ -287,13 +287,13 @@ class Gittle(object):
     @classmethod
     def init(cls, path):
         """Initialize a repository"""
-        mkdir(path)
+        mkdir_safe(path)
         repo = DulwichRepo.init(path)
         return cls(repo)
 
     @classmethod
     def init_bare(cls, path):
-        mkdir(path)
+        mkdir_safe(path)
         repo = DulwichRepo.init_bare(path)
         return cls(repo)
 
@@ -335,7 +335,7 @@ class Gittle(object):
     def dirty_pull_from(self, origin_uri, branch_name=None):
         # Remove all previously existing data
         rmtree(self.path)
-        mkdir(self.path)
+        mkdir_safe(self.path)
         self.repo = DulwichRepo.init(self.path)
 
         # Fetch brand new copy from remote
@@ -412,7 +412,7 @@ class Gittle(object):
     @classmethod
     def clone(cls, origin_uri, local_path, auth=None, mkdir=True, bare=False, **kwargs):
         """Clone a remote repository"""
-        mkdir(local_path)
+        mkdir_safe(local_path)
 
         # Initialize the local repository
         if bare:
