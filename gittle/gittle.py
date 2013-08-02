@@ -326,9 +326,9 @@ class Gittle(object):
         client, remote_path = get_transport_and_path(origin_uri, **client_kwargs)
         return client, remote_path
 
-    def push_to(self, origin_uri, branch_name=None, progress=None, progress_stderr=None, **kwargs):
+    def push_to(self, origin_uri, branch_name=None, progress=None, progress_stderr=None):
         selector = self._wants_branch(branch_name=branch_name)
-        client, remote_path = self.get_client(origin_uri, progress_stderr=progress_stderr, **kwargs)
+        client, remote_path = self.get_client(origin_uri, progress_stderr=progress_stderr)
         return client.send_pack(
             remote_path,
             selector,
@@ -337,8 +337,8 @@ class Gittle(object):
         )
 
     # Like: git push
-    def push(self, origin_uri=None, branch_name=None, progress=None, progress_stderr=None, **kwargs):
-        return self.push_to(origin_uri, branch_name, progress, progress_stderr, **kwargs)
+    def push(self, origin_uri=None, branch_name=None, progress=None, progress_stderr=None):
+        return self.push_to(origin_uri, branch_name, progress, progress_stderr)
 
     # Not recommended at ALL ... !!!
     def dirty_pull_from(self, origin_uri, branch_name=None):
@@ -357,9 +357,9 @@ class Gittle(object):
     def pull(self, origin_uri=None, branch_name=None):
         return self.pull_from(origin_uri, branch_name)
 
-    def fetch_remote(self, origin_uri=None, **kwargs):
+    def fetch_remote(self, origin_uri=None):
         # Get client
-        client, remote_path = self.get_client(origin_uri=origin_uri, **kwargs)
+        client, remote_path = self.get_client(origin_uri=origin_uri)
 
         # Fetch data from remote repository
         remote_refs = client.fetch(remote_path, self.repo)
@@ -397,12 +397,12 @@ class Gittle(object):
 
 
 
-    def fetch(self, origin_uri=None, bare=None, origin=None, **kwargs):
+    def fetch(self, origin_uri=None, bare=None, origin=None):
         bare = bare or False
         origin = origin or self.DEFAULT_REMOTE
 
         # Remote refs
-        remote_refs = self.fetch_remote(origin_uri, **kwargs)
+        remote_refs = self.fetch_remote(origin_uri)
 
         # Update head
         # Hit repo because head doesn't yet exist so
@@ -431,7 +431,7 @@ class Gittle(object):
 
         repo = cls(local_repo, origin_uri=origin_uri, auth=auth, *args, **kwargs)
 
-        repo.fetch(bare=bare, **kwargs)
+        repo.fetch(bare=bare)
 
         # Add origin
         # TODO
