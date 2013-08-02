@@ -285,17 +285,26 @@ class Gittle(object):
         return self.repo.open_index()
 
     @classmethod
-    def init(cls, path):
+    def init(cls, path, bare=None, *args, **kwargs):
         """Initialize a repository"""
         mkdir_safe(path)
-        repo = DulwichRepo.init(path)
-        return cls(repo)
+
+        # Constructor to use
+        if bare:
+            constructor = DulwichRepo.init_bare
+        else:
+            constructor = DulwichRepo.init
+
+        # Create dulwich repo
+        repo = constructor(path)
+
+        # Create Gittle repo
+        return cls(repo, *args, **kwargs)
 
     @classmethod
-    def init_bare(cls, path):
-        mkdir_safe(path)
-        repo = DulwichRepo.init_bare(path)
-        return cls(repo)
+    def init_bare(cls, *args, **kwargs):
+        kwargs.setdefault('bare', True)
+        return cls.init(*args, **kwargs)
 
     def get_client(self, origin_uri=None, **kwargs):
         # Get the remote URL
@@ -410,7 +419,7 @@ class Gittle(object):
 
 
     @classmethod
-    def clone(cls, origin_uri, local_path, auth=None, mkdir=True, bare=False, **kwargs):
+    def clone(cls, origin_uri, local_path, auth=None, mkdir=True, bare=False, *args, **kwargs):
         """Clone a remote repository"""
         mkdir_safe(local_path)
 
@@ -420,7 +429,7 @@ class Gittle(object):
         else:
             local_repo = cls.init(local_path)
 
-        repo = cls(local_repo, origin_uri=origin_uri, auth=auth)
+        repo = cls(local_repo, origin_uri=origin_uri, auth=auth, *args, **kwargs)
 
         repo.fetch(bare=bare, **kwargs)
 
