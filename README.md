@@ -104,7 +104,7 @@ repo = Gittle(repo_path, origin_uri=repo_url)
 key_file = open('/Users/Me/keys/rsa/private_rsa')
 repo.auth(pkey=key_file)
 
-# Do push
+# Do pull
 repo.pull()
 ```
 
@@ -161,7 +161,7 @@ print("Found %d versions out of a total of %d commits" % (len(versions), repo.co
 repo.modified_files
 ```
 
-### Count number of commit
+### Count number of commits
 
 ```python
 repo.commit_count
