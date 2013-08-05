@@ -1,17 +1,6 @@
-GitPython==0.3.2.RC1
-async==0.6.1
 -e git+https://github.com/AaronO/dulwich.git@a1aa061e5b6c8d6acbe805f174205d2323231449#egg=dulwich-dev
 -e git+https://github.com/FriendCode/funky.git@e89cb2ce4374bf2069c7f669e52e046f63757241#egg=funky-dev
-gitdb==0.5.4
 gittle==0.1.1
-ipython==0.13.1
-logilab-astng==0.24.1
-logilab-common==0.59.0
-mercurial
--e git+https://github.com/FriendCode/mimer.git#egg=mimer-dev
+-e git+https://github.com/FriendCode/mimer.git@a812e5f631b9b5c969df5a2ea84b635490a96ced#egg=mimer-dev
 paramiko==1.10.0
 pycrypto==2.6
-pylint==0.26.0
-smmap==0.8.2
-wsgiref==0.1.2
-
