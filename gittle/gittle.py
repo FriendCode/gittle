@@ -1123,7 +1123,7 @@ class Gittle(object):
 
     def commit_ls(self, ref, subpath=None):
         """List a "directory" for a given commit
-            using the tree of thqt commit
+           using the tree of that commit
         """
         tree_sha = self._commit_tree(ref)
 
@@ -1170,4 +1170,4 @@ class Gittle(object):
     fork = clone_bare
     log = commit_info
     diff_count = changes_count
-    comtributors = recent_contributors
+    contributors = recent_contributors
