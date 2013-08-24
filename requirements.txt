@@ -1,6 +1,0 @@
--e git+https://github.com/AaronO/dulwich.git@a1aa061e5b6c8d6acbe805f174205d2323231449#egg=dulwich-dev
--e git+https://github.com/FriendCode/funky.git@e89cb2ce4374bf2069c7f669e52e046f63757241#egg=funky-dev
-gittle==0.1.1
--e git+https://github.com/FriendCode/mimer.git@a812e5f631b9b5c969df5a2ea84b635490a96ced#egg=mimer-dev
-paramiko==1.10.0
-pycrypto==2.6
