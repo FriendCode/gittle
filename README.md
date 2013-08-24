@@ -3,38 +3,11 @@
 Gittle is a high-level pure-python git library.
 It builds upon dulwich which provides most of the low-level machinery
 
-## Why implement Git in Python ?
-
-### NEED FOR AWESOMENESS :
-- Git is Awesome
-- Python is Awesome
-- Automating Git isn't so Awesome
-
-### TO SOLVE MY OWN PROBLEMS AT FRIENDCODE :
-- Automate git repo management (push/pull, commit, etc ...)
-- Scriptable and usable from Python 
-- Easy to use & good interoperability in a SOA environment
-
-### USE IT FOR :
-- Local
-  - [X] Common git operations (add, rm, mv, commit, log)
-  - [X] Branch operations (creating, switching, deleting)
-- Remote
-  - [X] Fetching
-  - [X] Pushing
-  - [X] Pulling (needs merging)
-- Merging
-  - [-] Fast forward
-  - [-] Recursive
-  - [-] Merge branches
-- Diff
-  - [X] Filter binary files
-
 ## Install it
 
     pip install gittle
 
-## Examples : 
+## Examples :
 
 ### Clone a repository
 
@@ -215,3 +188,30 @@ GitServer('/', 'localhost').serve_forever()
 # Read/Write
 GitServer('/', 'localhost', perm='rw').serve_forever()
 ```
+
+## Why implement Git in Python ?
+
+### NEED FOR AWESOMENESS :
+- Git is Awesome
+- Python is Awesome
+- Automating Git isn't so Awesome
+
+### TO SOLVE MY OWN PROBLEMS AT FRIENDCODE :
+- Automate git repo management (push/pull, commit, etc ...)
+- Scriptable and usable from Python
+- Easy to use & good interoperability in a SOA environment
+
+### USE IT FOR :
+- Local
+  - [X] Common git operations (add, rm, mv, commit, log)
+  - [X] Branch operations (creating, switching, deleting)
+- Remote
+  - [X] Fetching
+  - [X] Pushing
+  - [X] Pulling (needs merging)
+- Merging
+  - [-] Fast forward
+  - [-] Recursive
+  - [-] Merge branches
+- Diff
+  - [X] Filter binary files
