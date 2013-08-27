@@ -393,8 +393,8 @@ class Gittle(object):
         )
 
         # Update HEAD
-        self['HEAD'] = refs['HEAD']
-
+        for k, v in refs.items():
+            self[k] = v
 
 
     def fetch(self, origin_uri=None, bare=None, origin=None):
@@ -412,7 +412,7 @@ class Gittle(object):
         self._setup_fetched_refs(remote_refs, origin, bare)
 
         # Checkout working directories
-        if not bare:
+        if not bare and self.has_commits:
             self.checkout_all()
         else:
             self.update_server_info()
@@ -1165,6 +1165,9 @@ class Gittle(object):
 
     def __setitem__(self, key, value):
         self.repo[key] = value
+
+    def __contains__(self, key):
+        return key in self.repo
 
     # Alias to clone_bare
     fork = clone_bare
