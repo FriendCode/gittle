@@ -7,7 +7,7 @@ except ImportError:
     from distutils.core import setup, Extension
     has_setuptools = False
 
-version_string = '0.2.0'
+version_string = '0.2.1'
 
 
 setup_kwargs = {}
@@ -24,7 +24,7 @@ install_requires = [
     'mimer',
 ]
 dependency_links = [
-    'https://github.com/AaronO/dulwich/tarball/dd274cf023593dd8ed76de0bcc86f19ffc2a0167#egg=dulwich-0.9.1',
+    'https://github.com/AaronO/dulwich/tarball/eebb032b2b7b982d21d636ac50b6e45de58b208b#egg=dulwich-0.9.1-2',
     'https://github.com/FriendCode/funky/tarball/e89cb2ce4374bf2069c7f669e52e046f63757241#egg=funky-0.0.1',
     'https://github.com/FriendCode/mimer/tarball/a812e5f631b9b5c969df5a2ea84b635490a96ced#egg=mimer-0.0.1',
 ]
