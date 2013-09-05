@@ -408,6 +408,10 @@ class Gittle(object):
         # Hit repo because head doesn't yet exist so
         # print("REFS = %s" % remote_refs)
 
+        # If no refs (empty repository()
+        if not remote_refs:
+            return
+
         # Update refs (branches, tags, HEAD)
         self._setup_fetched_refs(remote_refs, origin, bare)
 
