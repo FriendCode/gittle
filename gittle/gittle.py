@@ -454,8 +454,8 @@ class Gittle(object):
         if not tree:
             # If no tree then stage files
             modified_files = files or self.modified_files
-            logging.warning("STAGING : %s" % modified_files)
-            self.add(modified_files)
+            logging.info("STAGING : %s" % modified_files)
+            self.repo.stage(modified_files)
 
         # Messages
         message = message or self.DEFAULT_MESSAGE
