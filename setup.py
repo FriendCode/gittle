@@ -1,11 +1,26 @@
 #!/usr/bin/python
 
+import platform
+windows = platform.system() == 'Windows'
 try:
     from setuptools import setup, Extension
-    has_setuptools = True
 except ImportError:
-    from distutils.core import setup, Extension
     has_setuptools = False
+    from distutils.core import setup, Extension
+else:
+    has_setuptools = True
+    if windows:
+        from setuptools.command.easy_install import easy_install
+        run_setup = easy_install.run_setup
+        def _run_setup(self, setup_script, setup_base, args):
+            """Alternate run_setup function to pass '--pure' to the Dulwich
+            installer on Windows.
+            """
+            if 'dulwich' in setup_script:
+                args.insert(0,'--pure')
+            run_setup(self, setup_script, setup_base, args) 
+        easy_install.run_setup = _run_setup
+
 
 version_string = '0.2.2'
 
@@ -15,8 +30,8 @@ setup_kwargs = {}
 # Requirements
 install_requires = [
     # PyPi
-    'paramiko==1.10.0',
-    'pycrypto==2.6',
+    'paramiko==1.10.0' if not windows else '',
+    'pycrypto==2.6' if not windows else '',
 
     # Non PyPi
     'dulwich',
