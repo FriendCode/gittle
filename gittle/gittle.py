@@ -732,13 +732,13 @@ class Gittle(object):
         # Rebuild index from the current tree
         return self._checkout_tree(commit_tree)
 
-    def checkout(self, commit_sha=None, files=None):
-        """Checkout only a select amount of files
+    def checkout(self, ref):
+        """Checkout a given ref or SHA
         """
-        commit_sha = commit_sha or self.head
-        files = files or []
-
-        return self
+        self.repo.refs.set_symbolic_ref('HEAD', ref)
+        commit_tree = self._commit_tree(commit_sha)
+        # Rebuild index from the current tree
+        return self._checkout_tree(commit_tree)
 
     @funky.arglist_method
     def reset(self, files, commit='HEAD'):
