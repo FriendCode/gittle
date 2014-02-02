@@ -15,6 +15,7 @@ from dulwich.client import get_transport_and_path
 from dulwich.index import build_index_from_tree, changes_from_tree
 from dulwich.objects import Tree, Blob
 from dulwich.server import update_server_info
+from dulwich.refs import SYMREF
 
 # Funky imports
 import funky
@@ -987,7 +988,17 @@ class Gittle(object):
 
     @property
     def active_branch(self):
-        return self._active_branch()[0]
+        """Returns the name of the active branch, or None, if HEAD is detached
+        """
+        x = self.repo.refs.read_ref('HEAD')
+        if not x.startswith(SYMREF):
+            return None
+        else:
+            symref = x[len(SYMREF):]
+            if not symref.startswith(self.REFS_BRANCHES):
+                return None
+            else:
+                return symref[len(self.REFS_BRANCHES):]
 
     @property
     def active_sha(self):
