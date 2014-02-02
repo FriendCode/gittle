@@ -973,19 +973,6 @@ class Gittle(object):
     def branches(self):
         return self._refs_by_pattern(self.REFS_BRANCHES)
 
-    def _active_branch(self, refs=None, head=None):
-        head = head or self.head
-        refs = refs or self.branches
-        try:
-            return {
-                branch: branch_head
-                for branch, branch_head in refs.items()
-                if branch_head == head
-            }.items()[0]
-        except IndexError:
-            pass
-        return (None, None)
-
     @property
     def active_branch(self):
         """Returns the name of the active branch, or None, if HEAD is detached
@@ -1002,7 +989,9 @@ class Gittle(object):
 
     @property
     def active_sha(self):
-        return self._active_branch()[1]
+        """Deprecated equivalent to head property
+        """
+        return self.head
 
     @property
     def remote_branches(self):
