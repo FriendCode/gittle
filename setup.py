@@ -14,7 +14,7 @@ except ImportError:
 else:
     has_setuptools = True
 
-version_string = '0.2.2'
+version_string = '0.3.0'
 
 setup_kwargs = {
     'name': 'gittle',
