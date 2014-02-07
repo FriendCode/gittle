@@ -1065,6 +1065,24 @@ class Gittle(object):
 
         return new_ref
 
+    def create_orphan_branch(self, new_branch, empty_index=None):
+        """ Create a new branch with no commits in it.
+        Technically, just points HEAD to a non-existent branch.  The actual branch will
+        only be created if something is committed.  This is equivalent to:
+
+            git checkout --orphan <new_branch>,
+
+        Unless empty_index is set to True, in which case the index will be emptied along
+        with the file-tree (which is always emptied).
+        """
+        if new_branch in self.branches:
+            raise Exception("branch %s already exists" % new_branch)
+
+        self.repo.refs.set_symbolic_ref('HEAD', self._format_ref_branch(new_branch))
+
+        if self.is_working:
+            self.clean_working()
+
     def remove_branch(self, branch_name):
         ref = self._format_ref_branch(branch_name)
         return self.remove_ref(ref)
