@@ -1073,15 +1073,24 @@ class Gittle(object):
             git checkout --orphan <new_branch>,
 
         Unless empty_index is set to True, in which case the index will be emptied along
-        with the file-tree (which is always emptied).
+        with the file-tree (which is always emptied).  Against a clean working tree,
+        this is equivalent to:
+
+            git checkout --orphan <new_branch>
+            git reset --merge
         """
         if new_branch in self.branches:
             raise Exception("branch %s already exists" % new_branch)
 
-        self.repo.refs.set_symbolic_ref('HEAD', self._format_ref_branch(new_branch))
+        new_ref = self._format_ref_branch(new_branch)
+        self.repo.refs.set_symbolic_ref('HEAD', new_ref)
 
         if self.is_working:
+            if empty_index:
+               self.rm_all()
             self.clean_working()
+
+        return new_ref
 
     def remove_branch(self, branch_name):
         ref = self._format_ref_branch(branch_name)
