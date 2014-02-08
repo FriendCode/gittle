@@ -746,8 +746,12 @@ class Gittle(object):
         pass
 
     def rm_all(self):
-        self.index.clear()
-        return self.index.write()
+        # if we go at the index via the property, it is reconstructed
+        # each time and therefore clear() doesn't have the desired effect,
+        # therefore, we cache it in a variable and use that.
+        i = self.index
+        i.clear()
+        return i.write()
 
     def _to_commit(self, commit_obj):
         """Allows methods to accept both SHA's or dulwich Commit objects as arguments
