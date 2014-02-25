@@ -857,15 +857,15 @@ class Gittle(object):
         else:
             tree = self[self._commit_tree(commit_sha)]
 
-        for mode, path, sha in tree.entries():
+        for entry in tree.items():
             # Check if entry is a directory
-            if mode == self.MODE_DIRECTORY:
+            if entry.mode == self.MODE_DIRECTORY:
                 context.update(
-                    self.get_commit_files(sha, parent_path=os.path.join(parent_path, path), is_tree=True, paths=paths)
+                    self.get_commit_files(entry.sha, parent_path=os.path.join(parent_path, entry.path), is_tree=True, paths=paths)
                 )
                 continue
 
-            subpath = os.path.join(parent_path, path)
+            subpath = os.path.join(parent_path, entry.path)
 
             # Only add the files we want
             if not(paths is None or subpath in paths):
@@ -873,11 +873,11 @@ class Gittle(object):
 
             # Add file entry
             context[subpath] = {
-                'name': path,
+                'name': entry.path,
                 'path': subpath,
-                'mode': mode,
-                'sha': sha,
-                'data': self._blob_data(sha),
+                'mode': entry.mode,
+                'sha': entry.sha,
+                'data': self._blob_data(entry.sha),
             }
         return context
 
@@ -1137,14 +1137,14 @@ class Gittle(object):
             depth = self.MAX_TREE_DEPTH
         elif depth == 0:
             return structure
-        for mode, path, sha in tree.entries():
+        for entry in tree.items():
             # tree
-            if mode == self.MODE_DIRECTORY:
+            if entry.mode == self.MODE_DIRECTORY:
                 # Recur
-                structure[path] = self._get_fs_structure(sha, depth=depth - 1, parent_sha=tree_sha)
+                structure[entry.path] = self._get_fs_structure(entry.sha, depth=depth - 1, parent_sha=tree_sha)
             # commit
             else:
-                structure[path] = sha
+                structure[entry.path] = entry.sha
         structure['.'] = tree_sha
         structure['..'] = parent_sha or tree_sha
         return structure
