@@ -746,8 +746,12 @@ class Gittle(object):
         pass
 
     def rm_all(self):
-        self.index.clear()
-        return self.index.write()
+        # if we go at the index via the property, it is reconstructed
+        # each time and therefore clear() doesn't have the desired effect,
+        # therefore, we cache it in a variable and use that.
+        i = self.index
+        i.clear()
+        return i.write()
 
     def _to_commit(self, commit_obj):
         """Allows methods to accept both SHA's or dulwich Commit objects as arguments
@@ -853,15 +857,15 @@ class Gittle(object):
         else:
             tree = self[self._commit_tree(commit_sha)]
 
-        for mode, path, sha in tree.entries():
+        for entry in tree.items():
             # Check if entry is a directory
-            if mode == self.MODE_DIRECTORY:
+            if entry.mode == self.MODE_DIRECTORY:
                 context.update(
-                    self.get_commit_files(sha, parent_path=os.path.join(parent_path, path), is_tree=True, paths=paths)
+                    self.get_commit_files(entry.sha, parent_path=os.path.join(parent_path, entry.path), is_tree=True, paths=paths)
                 )
                 continue
 
-            subpath = os.path.join(parent_path, path)
+            subpath = os.path.join(parent_path, entry.path)
 
             # Only add the files we want
             if not(paths is None or subpath in paths):
@@ -869,11 +873,11 @@ class Gittle(object):
 
             # Add file entry
             context[subpath] = {
-                'name': path,
+                'name': entry.path,
                 'path': subpath,
-                'mode': mode,
-                'sha': sha,
-                'data': self._blob_data(sha),
+                'mode': entry.mode,
+                'sha': entry.sha,
+                'data': self._blob_data(entry.sha),
             }
         return context
 
@@ -1061,6 +1065,33 @@ class Gittle(object):
 
         return new_ref
 
+    def create_orphan_branch(self, new_branch, empty_index=None):
+        """ Create a new branch with no commits in it.
+        Technically, just points HEAD to a non-existent branch.  The actual branch will
+        only be created if something is committed.  This is equivalent to:
+
+            git checkout --orphan <new_branch>,
+
+        Unless empty_index is set to True, in which case the index will be emptied along
+        with the file-tree (which is always emptied).  Against a clean working tree,
+        this is equivalent to:
+
+            git checkout --orphan <new_branch>
+            git reset --merge
+        """
+        if new_branch in self.branches:
+            raise Exception("branch %s already exists" % new_branch)
+
+        new_ref = self._format_ref_branch(new_branch)
+        self.repo.refs.set_symbolic_ref('HEAD', new_ref)
+
+        if self.is_working:
+            if empty_index:
+               self.rm_all()
+            self.clean_working()
+
+        return new_ref
+
     def remove_branch(self, branch_name):
         ref = self._format_ref_branch(branch_name)
         return self.remove_ref(ref)
@@ -1106,14 +1137,14 @@ class Gittle(object):
             depth = self.MAX_TREE_DEPTH
         elif depth == 0:
             return structure
-        for mode, path, sha in tree.entries():
+        for entry in tree.items():
             # tree
-            if mode == self.MODE_DIRECTORY:
+            if entry.mode == self.MODE_DIRECTORY:
                 # Recur
-                structure[path] = self._get_fs_structure(sha, depth=depth - 1, parent_sha=tree_sha)
+                structure[entry.path] = self._get_fs_structure(entry.sha, depth=depth - 1, parent_sha=tree_sha)
             # commit
             else:
-                structure[path] = sha
+                structure[entry.path] = entry.sha
         structure['.'] = tree_sha
         structure['..'] = parent_sha or tree_sha
         return structure

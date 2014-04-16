@@ -111,6 +111,9 @@ repo.auth(username="your_name", password="your_password")
 # Create branch off master
 repo.create_branch('dev', 'master')
 
+# Create an empty branch (like 'git checkout --orphan')
+repo.create_orphan_branch('NewBranchName')
+
 # Print a list of branches
 print(repo.branches)
 
