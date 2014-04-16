@@ -737,7 +737,7 @@ class Gittle(object):
         """Checkout a given ref or SHA
         """
         self.repo.refs.set_symbolic_ref('HEAD', ref)
-        commit_tree = self._commit_tree(commit_sha)
+        commit_tree = self._commit_tree(ref)
         # Rebuild index from the current tree
         return self._checkout_tree(commit_tree)
 
