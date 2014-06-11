@@ -394,7 +394,7 @@ class Gittle(object):
         )
 
         # Update HEAD
-        for k, v in refs.items():
+        for k, v in utils.git.clean_refs(refs).items():
             self[k] = v
 
 
