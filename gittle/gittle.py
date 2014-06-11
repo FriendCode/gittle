@@ -770,7 +770,7 @@ class Gittle(object):
             commit_obj = self.repo[commit_obj]
         return commit_obj.id
 
-    def _blob_data(self, sha):
+    def blob_data(self, sha):
         """Return a blobs content for a given SHA
         """
         return self[sha].data
@@ -877,7 +877,7 @@ class Gittle(object):
                 'path': subpath,
                 'mode': entry.mode,
                 'sha': entry.sha,
-                'data': self._blob_data(entry.sha),
+                'data': self.blob_data(entry.sha),
             }
         return context
 
