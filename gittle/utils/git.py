@@ -6,26 +6,27 @@ from functools import partial
 # Dulwich imports
 from dulwich import patch
 from dulwich.objects import Blob
+from dulwich.patch import is_binary
 
 # Funky imports
 from funky import first, true_only, rest, negate, transform
 
-# Mimer imports
-from mimer import is_readable
 
+def is_readable(store):
+    def fn(info):
+        path, mode, sha = info
+        return path is None or (type(store[sha]) is Blob and not is_binary(store[sha].data))
+    return fn
 
-def _is_readable_info(info):
-    path, mode, sha = info
-    return path is None or is_readable(path)
+def is_readable_change(store):
+    def fn(change):
+        return all(
+            map(is_readable(store), change)
+        )
+    return fn
 
-
-def is_readable_change(change):
-    return all(
-        map(_is_readable_info, change)
-    )
-
-is_unreadable_change = negate(is_readable_change)
-
+def is_unreadable_change(store):
+    return negate(is_readable_change(store))
 
 def dummy_diff(*args, **kwargs):
     return ''
@@ -114,8 +115,8 @@ def diff_changes(object_store, changes, diff_func=object_diff, filter_binary=Tru
     """Return a dict of diffs for the changes
     """
     pairs = changes_to_pairs(changes)
-    readable_pairs = filter(is_readable_change, pairs)
-    unreadable_pairs = filter(is_unreadable_change, pairs)
+    readable_pairs = filter(is_readable_change(object_store), pairs)
+    unreadable_pairs = filter(is_unreadable_change(object_store), pairs)
 
     return sum([
         _diff_pairs(object_store, readable_pairs, diff_func),
@@ -164,8 +165,8 @@ def diff_changes_paths(object_store, basepath, changes, filter_binary=True):
        in the working directory
     """
     pairs = changes_to_pairs(changes)
-    readable_pairs = filter(is_readable_change, pairs)
-    unreadable_pairs = filter(is_unreadable_change, pairs)
+    readable_pairs = filter(is_readable_change(object_store), pairs)
+    unreadable_pairs = filter(is_unreadable_change(object_store), pairs)
 
     blobs = changes_to_blobs(object_store, basepath, readable_pairs)
 
