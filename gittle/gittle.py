@@ -203,7 +203,8 @@ class Gittle(object):
         """
         ref = ref or 'HEAD'
         sha = self._commit_sha(ref)
-        return self.repo.revision_history(sha)
+        for entry in self.repo.get_walker(sha):
+            yield entry.commit
 
     def branch_walker(self, branch):
         branch = branch or self.DEFAULT_BRANCH
