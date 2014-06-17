@@ -910,7 +910,7 @@ class Gittle(object):
 
     def _diff_between(self, old_commit_sha, new_commit_sha, diff_function=None, filter_binary=True):
         """Internal method for getting a diff between two commits
-            Please use .diff method unless you have very speciic needs
+            Please use .diff method unless you have very specific needs
         """
 
         # If commit is first commit (new_commit_sha == old_commit_sha)
