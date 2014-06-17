@@ -166,10 +166,10 @@ def diff_changes_paths(object_store, basepath, changes, filter_binary=True):
 
     blobs = changes_to_blobs(object_store, basepath, readable_pairs)
 
-    return sum([
-        _diff_pairs(object_store, blobs, blob_diff),
-        _diff_pairs(object_store, unreadable_pairs, dummy_diff, 'binary')
-    ], [])
+    for x in _diff_pairs(object_store, blobs, blob_diff):
+        yield x
+    for x in _diff_pairs(object_store, unreadable_pairs, dummy_diff, 'binary'):
+        yield x
 
 
 def changes_tree_diff(object_store, old_tree, new_tree):
