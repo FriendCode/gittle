@@ -207,7 +207,7 @@ class Gittle(object):
             yield entry.commit
 
     def branch_walker(self, branch):
-        branch = branch or self.DEFAULT_BRANCH
+        branch = branch or self.active_branch
         ref = self._format_ref_branch(branch)
         return self.ref_walker(ref)
 
@@ -249,7 +249,7 @@ class Gittle(object):
 
     # Generate a branch selector (used for pushing)
     def _wants_branch(self, branch_name=None):
-        branch_name = branch_name or self.DEFAULT_BRANCH
+        branch_name = branch_name or self.active_branch
         refs_key = self._format_ref_branch(branch_name)
         sha = self.branches[branch_name]
 
