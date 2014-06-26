@@ -440,7 +440,7 @@ class Gittle(object):
         repo.fetch(bare=bare)
 
         # Add origin
-        # TODO
+        repo.add_remote('origin', origin_uri)
 
         return repo
 
