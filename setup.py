@@ -35,14 +35,8 @@ setup_kwargs = {
     # PyPI
     'paramiko==1.10.0',
     'pycrypto==2.6',
-
-    # Non PyPI
-    'dulwich',
-    'funky',
-    ],
-    'dependency_links': [
-        'https://github.com/AaronO/dulwich/tarball/eebb032b2b7b982d21d636ac50b6e45de58b208b#egg=dulwich-0.9.1-2',
-        'https://github.com/FriendCode/funky/tarball/e89cb2ce4374bf2069c7f669e52e046f63757241#egg=funky-0.0.1',
+    'dulwich==0.9.7',
+    'funky==0.0.2',
     ],
 }
 
