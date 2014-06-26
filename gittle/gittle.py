@@ -1021,6 +1021,19 @@ class Gittle(object):
             if keys[0] == 'remote'
         }
 
+    def add_remote(self, remote_name, remote_url):
+        # Get repo's config
+        config = self.repo.get_config()
+
+        # Add new entries for remote
+        config.set(('remote', remote_name), 'url', remote_url)
+        config.set(('remote', remote_name), 'fetch', ":+refs/heads/*:refs/remotes/%s/*" % remote_name)
+
+        # Write to disk
+        config.write_to_path()
+
+        return remote_name
+
     def add_ref(self, new_ref, old_ref):
         self.repo.refs[new_ref] = self.repo.refs[old_ref]
         self.update_server_info()
