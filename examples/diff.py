@@ -16,4 +16,4 @@ Last Diff
 """)
 
 
-print(repo.diff('HEAD'))
+print(list(repo.diff('HEAD')))

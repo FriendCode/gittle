@@ -100,15 +100,11 @@ def changes_to_pairs(changes):
 
 
 def _diff_pairs(object_store, pairs, diff_func, diff_type='text'):
-    return [
-        {
-            'diff': diff_func(object_store, old, new),
-            'new': change_to_dict(new),
-            'old': change_to_dict(old),
-            'type': diff_type
-        }
-        for old, new in pairs
-    ]
+    for old, new in pairs:
+        yield { 'diff': diff_func(object_store, old, new),
+                'new': change_to_dict(new),
+                'old': change_to_dict(old),
+                'type': diff_type }
 
 
 def diff_changes(object_store, changes, diff_func=object_diff, filter_binary=True):
@@ -118,10 +114,10 @@ def diff_changes(object_store, changes, diff_func=object_diff, filter_binary=Tru
     readable_pairs = filter(is_readable_change(object_store), pairs)
     unreadable_pairs = filter(is_unreadable_change(object_store), pairs)
 
-    return sum([
-        _diff_pairs(object_store, readable_pairs, diff_func),
-        _diff_pairs(object_store, unreadable_pairs, dummy_diff, 'binary')
-    ], [])
+    for x in _diff_pairs(object_store, readable_pairs, diff_func):
+        yield x
+    for x in _diff_pairs(object_store, unreadable_pairs, dummy_diff, 'binary'):
+        yield x
 
 
 def obj_blob(object_store, info):
@@ -170,10 +166,10 @@ def diff_changes_paths(object_store, basepath, changes, filter_binary=True):
 
     blobs = changes_to_blobs(object_store, basepath, readable_pairs)
 
-    return sum([
-        _diff_pairs(object_store, blobs, blob_diff),
-        _diff_pairs(object_store, unreadable_pairs, dummy_diff, 'binary')
-    ], [])
+    for x in _diff_pairs(object_store, blobs, blob_diff):
+        yield x
+    for x in _diff_pairs(object_store, unreadable_pairs, dummy_diff, 'binary'):
+        yield x
 
 
 def changes_tree_diff(object_store, old_tree, new_tree):
@@ -188,7 +184,7 @@ def dict_tree_diff(object_store, old_tree, new_tree, filter_binary=True):
     return diff_changes(object_store, changes, filter_binary=filter_binary)
 
 
-def classic_tree_diff(object_store, old_tree, new_tree):
+def classic_tree_diff(object_store, old_tree, new_tree, filter_binary=None):
     """Does a classic diff and returns the output in a buffer
     """
     output = StringIO()
