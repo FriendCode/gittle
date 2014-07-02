@@ -1,0 +1,22 @@
+As of July 2nd, 2014, we have made a change to the gittle
+licensing.
+
+gittle is now dual-licensed as Apache 2.0 and GPLv2.  Please
+see the files LICENSE_Apache2.0 and LICENSE_GPLv2 for the
+gory legalese of the respective licenses.
+
+See: https://github.com/FriendCode/gittle/issues/24
+for the backstory behind this change.  In short, our
+objective was simply to license gittle in as convenient
+and efficacious a manner as possible for its consumers.
+
+If you have any questions about this, drop us a line.  We'll
+don our best lawyer costumes, and do what we can to help.
+
+When contributing pull requests to Gittle, please remember
+to add yourself as a contributor at the top of any files
+you modify.
+
+Thanks!
+
+-gmt & the gittle coders

@@ -1,3 +1,11 @@
+# Copyright 2012-2014 Aaron O'Mullan <aaron.omullan@friendco.de>
+# Copyright 2014 Christopher Corley <cscorley@ua.edu>
+# Copyright 2014 Gregory M. Turner <gmt@be-evil.net>
+#
+# This program is free software; you can redistribute it and/or
+# modify it only under the terms of the GNU GPLv2 and/or the Apache
+# License, Version 2.0.  See the COPYING file for further details.
+
 # From the future
 from __future__ import absolute_import
 
