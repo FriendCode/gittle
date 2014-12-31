@@ -221,3 +221,9 @@ GitServer('/', 'localhost', perm='rw').serve_forever()
   - [-] Merge branches
 - Diff
   - [X] Filter binary files
+
+# Building and uploading to PyPi
+
+```
+python setup.py sdist bdist_egg upload
+```
