@@ -1262,6 +1262,14 @@ class Gittle(object):
             pass
         return key in self.repo
 
+    def __delitem__(self, key):
+        try:
+            key = self.dwim_reference(key)
+        except:
+            raise KeyError(key)
+        self.remove_ref(key)
+
+
     # Alias to clone_bare
     fork = clone_bare
     log = commit_info
