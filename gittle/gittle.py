@@ -768,8 +768,33 @@ class Gittle(object):
             return commit_obj
         elif isinstance(commit_obj, basestring):
             # Can't use self[commit_obj] to avoid infinite recursion
-            commit_obj = self.repo[commit_obj]
+            commit_obj = self.repo[self.dwim_reference(commit_obj)]
         return commit_obj.id
+
+    def dwim_reference(self, ref):
+        """Dwim resolves a short reference to a full reference
+        """
+
+        # Formats of refs we want to try in order
+        formats = [
+            "%s",
+            "refs/%s",
+            "refs/tags/%s",
+            "refs/heads/%s",
+            "refs/remotes/%s",
+            "refs/remotes/%s/HEAD",
+        ]
+
+        for f in formats:
+            try:
+                fullref = f % ref
+                if not fullref in self.repo:
+                    continue
+                return fullref
+            except:
+                continue
+
+        raise Exception("Could not resolve ref")
 
     def blob_data(self, sha):
         """Return a blobs content for a given SHA
