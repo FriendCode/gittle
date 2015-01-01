@@ -1246,9 +1246,17 @@ class Gittle(object):
         return self.repo[sha]
 
     def __setitem__(self, key, value):
+        try:
+            key = self.dwim_reference(key)
+        except:
+            pass
         self.repo[key] = value
 
     def __contains__(self, key):
+        try:
+            key = self.dwim_reference(key)
+        except:
+            pass
         return key in self.repo
 
     # Alias to clone_bare
