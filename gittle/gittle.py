@@ -1242,7 +1242,10 @@ class Gittle(object):
         return hash(self.path)
 
     def __getitem__(self, key):
-        sha = self._parse_reference(key)
+        try:
+            sha = self._parse_reference(key)
+        except:
+            raise KeyError(key)
         return self.repo[sha]
 
     def __setitem__(self, key, value):
