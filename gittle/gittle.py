@@ -1060,7 +1060,7 @@ class Gittle(object):
         return remote_name
 
     def add_ref(self, new_ref, old_ref):
-        self.repo.refs[new_ref] = self.repo.refs[old_ref]
+        self.repo.refs[new_ref] = self[old_ref]
         self.update_server_info()
 
     def remove_ref(self, ref_name):
