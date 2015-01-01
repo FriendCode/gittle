@@ -1158,6 +1158,14 @@ class Gittle(object):
             # Add files for the current branch
             self.checkout_all()
 
+    def create_tag(self, tag_name, target):
+        ref = self._format_ref_tag(tag_name)
+        return self.add_ref(ref, self._parse_reference(target))
+
+    def remove_tag(self, tag_name):
+        ref = self._format_ref_tag(tag_name)
+        return self.remove_ref(ref)
+
     def clean(self, force=None, directories=None):
         untracked_files = self.untracked_files
         map(os.remove, untracked_files)
