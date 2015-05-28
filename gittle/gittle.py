@@ -1052,7 +1052,7 @@ class Gittle(object):
 
         # Add new entries for remote
         config.set(('remote', remote_name), 'url', remote_url)
-        config.set(('remote', remote_name), 'fetch', ":+refs/heads/*:refs/remotes/%s/*" % remote_name)
+        config.set(('remote', remote_name), 'fetch', "+refs/heads/*:refs/remotes/%s/*" % remote_name)
 
         # Write to disk
         config.write_to_path()
