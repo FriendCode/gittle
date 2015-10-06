@@ -16,6 +16,7 @@ from dulwich.index import build_index_from_tree, changes_from_tree
 from dulwich.objects import Tree, Blob
 from dulwich.server import update_server_info
 from dulwich.refs import SYMREF
+from dulwich.errors import NotGitRepository
 
 # Funky imports
 import funky
@@ -54,6 +55,16 @@ def bare_only(method):
         assert self.is_bare, "%s can not be called on a working repository" % method.func_name
         return method(self, *args, **kwargs)
     return f
+
+
+def is_repo(path):
+    """Returns True if path is a git repository, False if it is not"""
+    try:
+        repo = Gittle(path)
+    except NotGitRepository:
+        return False
+    else:
+        return True
 
 
 class Gittle(object):
