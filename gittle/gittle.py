@@ -57,16 +57,6 @@ def bare_only(method):
     return f
 
 
-def is_repo(path):
-    """Returns True if path is a git repository, False if it is not"""
-    try:
-        repo = Gittle(path)
-    except NotGitRepository:
-        return False
-    else:
-        return True
-
-
 class Gittle(object):
     """All paths used in Gittle external methods must be paths relative to the git repository
     """
@@ -318,6 +308,16 @@ class Gittle(object):
     def init_bare(cls, *args, **kwargs):
         kwargs.setdefault('bare', True)
         return cls.init(*args, **kwargs)
+
+    @classmethod
+    def is_repo(cls, path):
+        """Returns True if path is a git repository, False if it is not"""
+        try:
+            repo = Gittle(path)
+        except NotGitRepository:
+            return False
+        else:
+            return True
 
     def get_client(self, origin_uri=None, **kwargs):
         # Get the remote URL
