@@ -1,6 +1,11 @@
 # Python imports
 import os
-from StringIO import StringIO
+
+try:
+    from io import StringIO
+except ImportError:
+    from StringIO import StringIO
+
 from functools import partial
 
 # Dulwich imports
