@@ -22,6 +22,8 @@ from .exceptions import InvalidRSAKey
 # Exports
 __all__ = ('GittleAuth',)
 
+if os.sys.version_info.major > 2 or (os.sys.version_info.major == 2 and os.sys.version_info.minor < 7):
+    basestring = str
 
 def get_pkey_file(pkey):
     if isinstance(pkey, basestring):
