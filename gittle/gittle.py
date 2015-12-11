@@ -29,6 +29,8 @@ from gittle import utils
 # Exports
 __all__ = ('Gittle',)
 
+if os.sys.version_info.major > 2 or (os.sys.version_info.major == 2 and os.sys.version_info.minor < 7):
+    basestring = str
 
 # Guarantee that a diretory exists
 def mkdir_safe(path):
