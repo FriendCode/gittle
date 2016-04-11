@@ -16,6 +16,7 @@ from dulwich.index import build_index_from_tree, changes_from_tree
 from dulwich.objects import Tree, Blob
 from dulwich.server import update_server_info
 from dulwich.refs import SYMREF
+from dulwich.errors import NotGitRepository
 
 # Funky imports
 import funky
@@ -309,6 +310,16 @@ class Gittle(object):
     def init_bare(cls, *args, **kwargs):
         kwargs.setdefault('bare', True)
         return cls.init(*args, **kwargs)
+
+    @classmethod
+    def is_repo(cls, path):
+        """Returns True if path is a git repository, False if it is not"""
+        try:
+            repo = Gittle(path)
+        except NotGitRepository:
+            return False
+        else:
+            return True
 
     def get_client(self, origin_uri=None, **kwargs):
         # Get the remote URL
