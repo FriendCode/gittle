@@ -1,6 +1,11 @@
 # Python imports
 import os
-from StringIO import StringIO
+
+try:
+    from io import StringIO
+except ImportError:
+    from StringIO import StringIO
+
 from functools import partial
 
 # Dulwich imports
@@ -11,6 +16,8 @@ from dulwich.patch import is_binary
 # Funky imports
 from funky import first, true_only, rest, negate, transform
 
+if os.sys.version_info.major > 2 or (os.sys.version_info.major == 2 and os.sys.version_info.minor < 7):
+    basestring = str
 
 def is_readable(store):
     def fn(info):

@@ -29,6 +29,8 @@ from gittle import utils
 # Exports
 __all__ = ('Gittle',)
 
+if os.sys.version_info.major > 2 or (os.sys.version_info.major == 2 and os.sys.version_info.minor < 7):
+    basestring = str
 
 # Guarantee that a diretory exists
 def mkdir_safe(path):
@@ -95,7 +97,7 @@ class Gittle(object):
     PATTERN_MODIFIED = (True, True)
 
     # Permissions
-    MODE_DIRECTORY = 040000  # Used to tell if a tree entry is a directory
+    MODE_DIRECTORY = 0o40000  # Used to tell if a tree entry is a directory
 
     # Tree depth
     MAX_TREE_DEPTH = 1000
