@@ -23,7 +23,7 @@ def path_filter_file(path, abspath):
 
 @arglist
 def path_filter_regex(regexes):
-    compiled_regexes = map(re.compile, regexes)
+    compiled_regexes = list(map(re.compile, regexes))
 
     def _filter(path, abspath):
         return any([
@@ -45,7 +45,7 @@ def combine_filters(filters):
 
 
 def abspaths_only(paths_couple):
-    return map(lambda x: x[1], paths_couple)
+    return [x[1] for x in paths_couple]
 
 
 def clean_relative_paths(paths):
@@ -69,10 +69,10 @@ def dir_subpaths(root_path):
             os.path.relpath(abs_dirname, root_path)
             for abs_dirname in abs_dirnames
         ]
-        paths.extend(zip(
+        paths.extend(list(zip(
             rel_dirnames,
             abs_dirnames,
-        ))
+        )))
 
         abs_filenames = [
             os.path.join(dirname, filename)
@@ -82,10 +82,10 @@ def dir_subpaths(root_path):
             os.path.relpath(abs_filename, root_path)
             for abs_filename in abs_filenames
         ]
-        paths.extend(zip(
+        paths.extend(list(zip(
             rel_filenames,
             abs_filenames,
-        ))
+        )))
 
     return paths
 
@@ -104,11 +104,11 @@ def subpaths(root_path, filters=None):
     paths = dir_subpaths(root_path)
 
     # Do filtering
-    filtered_paths = filter(filter_func, paths)
-    relative_filtered_paths = map(first, filtered_paths)
+    filtered_paths = list(filter(filter_func, paths))
+    relative_filtered_paths = list(map(first, filtered_paths))
     return clean_relative_paths(relative_filtered_paths)
 
 
 @arglist
 def globers_to_regex(globers):
-    return map(fnmatch.translate, globers)
+    return list(map(fnmatch.translate, globers))

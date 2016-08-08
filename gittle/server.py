@@ -41,8 +41,8 @@ class SubFileSystemBackend(FileSystemBackend):
         stripped_path = path.strip('/')
         full_path = self.rewrite_path(stripped_path)
 
-        print('opening %s' % path)
-        print('full path = %s' % full_path)
+        print(('opening %s' % path))
+        print(('full path = %s' % full_path))
 
         return super(SubFileSystemBackend, self).open_repository(full_path)
 
