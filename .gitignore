@@ -40,3 +40,4 @@ nosetests.xml
 
 # gvim
 .*.swp
+*.bak

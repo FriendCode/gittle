@@ -11,7 +11,7 @@ import os
 try:
     from io import StringIO
 except ImportError:
-    from StringIO import StringIO
+    from io import StringIO
 
 from functools import partial
 
@@ -24,7 +24,7 @@ from dulwich.patch import is_binary
 from funky import first, true_only, rest, negate, transform
 
 if os.sys.version_info.major > 2 or (os.sys.version_info.major == 2 and os.sys.version_info.minor < 7):
-    basestring = str
+    str = str
 
 def is_readable(store):
     def fn(info):
@@ -125,8 +125,8 @@ def diff_changes(object_store, changes, diff_func=object_diff, filter_binary=Tru
     """Return a dict of diffs for the changes
     """
     pairs = changes_to_pairs(changes)
-    readable_pairs = filter(is_readable_change(object_store), pairs)
-    unreadable_pairs = filter(is_unreadable_change(object_store), pairs)
+    readable_pairs = list(filter(is_readable_change(object_store), pairs))
+    unreadable_pairs = list(filter(is_unreadable_change(object_store), pairs))
 
     for x in _diff_pairs(object_store, readable_pairs, diff_func):
         yield x
@@ -175,8 +175,8 @@ def diff_changes_paths(object_store, basepath, changes, filter_binary=True):
        in the working directory
     """
     pairs = changes_to_pairs(changes)
-    readable_pairs = filter(is_readable_change(object_store), pairs)
-    unreadable_pairs = filter(is_unreadable_change(object_store), pairs)
+    readable_pairs = list(filter(is_readable_change(object_store), pairs))
+    unreadable_pairs = list(filter(is_unreadable_change(object_store), pairs))
 
     blobs = changes_to_blobs(object_store, basepath, readable_pairs)
 
@@ -221,7 +221,7 @@ def prune_tree(tree, paths):
 
 
 def is_sha(sha):
-    return isinstance(sha, basestring) and len(sha) == 40
+    return isinstance(sha, str) and len(sha) == 40
 
 
 def blob_from_path(basepath, path):
@@ -245,12 +245,12 @@ def subrefs(refs_dict, base):
     """Return the contents of this container as a dictionary.
     """
     base = base or ''
-    keys = refs_dict.keys()
-    subkeys = map(
+    keys = list(refs_dict.keys())
+    subkeys = list(map(
         partial(subkey, base),
         keys
-    )
-    key_pairs = zip(keys, subkeys)
+    ))
+    key_pairs = list(zip(keys, subkeys))
 
     return {
         newkey: refs_dict[oldkey]
@@ -262,6 +262,6 @@ def subrefs(refs_dict, base):
 def clean_refs(refs):
     return {
         ref: sha
-        for ref, sha in refs.items()
+        for ref, sha in list(refs.items())
         if not ref.endswith('^{}')
     }

@@ -11,7 +11,7 @@ try:
     from io import StringIO
 except ImportError:
     # Fallback to pure python if not available
-    from StringIO import StringIO
+    from io import StringIO
 
 
 # Paramiko imports
@@ -29,10 +29,10 @@ from .exceptions import InvalidRSAKey
 __all__ = ('GittleAuth',)
 
 if os.sys.version_info.major > 2 or (os.sys.version_info.major == 2 and os.sys.version_info.minor < 7):
-    basestring = str
+    str = str
 
 def get_pkey_file(pkey):
-    if isinstance(pkey, basestring):
+    if isinstance(pkey, str):
         if os.path.exists(pkey):
             pkey_file = open(pkey)
         else:

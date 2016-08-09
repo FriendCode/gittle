@@ -13,10 +13,10 @@ BASE_DIR = '/Users/aaron/git/'
 absbase = partial(os.path.join, BASE_DIR)
 
 TRIES = 1
-PATHS = map(absbase, [
+PATHS = list(map(absbase, [
     'gittle/',
     'loadfire/',
-])
+]))
 
 
 def paths_exists(repo):
@@ -51,7 +51,7 @@ def test_repo(repo_path):
 def main():
     paths = PATHS * TRIES
     for path in paths:
-        print('Testing : %s' % path)
+        print(('Testing : %s' % path))
         test_repo(path)
 
 

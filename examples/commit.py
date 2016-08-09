@@ -31,6 +31,6 @@ repo.stage(fn)
 repo.commit(name=name, email=email, message=message)
 
 
-print('COMMIT_INFO =', repo.commit_info())
+print(('COMMIT_INFO =', repo.commit_info()))
 
-print('PATH =', path)
+print(('PATH =', path))
